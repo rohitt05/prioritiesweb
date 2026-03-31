@@ -85,16 +85,15 @@ export default function WaitlistSection() {
 
         <AnimatePresence mode="wait">
           {!submitted ? (
-            <motion.form
+            <motion.div
               key="form"
-              onSubmit={handleSubmit}
               initial={{ opacity: 0, y: 16 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ delay: 0.3, duration: 0.6 }}
               className="flex flex-col gap-3 w-full"
             >
-              <div className="flex flex-col sm:flex-row gap-3">
+              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="email"
                   value={email}
@@ -103,22 +102,21 @@ export default function WaitlistSection() {
                   required
                   className="flex-1 px-4 sm:px-5 py-4 rounded-2xl bg-white border border-[rgba(67,61,53,0.12)] text-[#2C2720] placeholder-[#A89F8D] text-[14px] outline-none focus:border-[#D4A373] transition-colors shadow-sm min-w-0"
                 />
-                <motion.button
+                <button
                   type="submit"
                   disabled={loading}
                   className="btn-ink justify-center py-4 px-6 text-[14px] whitespace-nowrap"
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
+                  style={{ transition: 'transform 0.15s ease, background 0.25s ease' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.03)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)' }}
+                  onMouseDown={e  => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)' }}
+                  onMouseUp={e    => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.03)' }}
                 >
                   {loading ? (
-                    <motion.div
-                      className="w-4 h-4 rounded-full border-2 border-[#FDFCF0]/40 border-t-[#FDFCF0]"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
-                    />
+                    <span className="inline-block w-4 h-4 rounded-full border-2 border-[#FDFCF0]/40 border-t-[#FDFCF0] animate-spin" />
                   ) : 'Join Waitlist →'}
-                </motion.button>
-              </div>
+                </button>
+              </form>
               {error && (
                 <motion.p
                   initial={{ opacity: 0, y: -6 }}
@@ -126,7 +124,7 @@ export default function WaitlistSection() {
                   className="text-[12px] text-red-400 text-left px-1"
                 >{error}</motion.p>
               )}
-            </motion.form>
+            </motion.div>
           ) : (
             <motion.div
               key="success"
@@ -141,8 +139,8 @@ export default function WaitlistSection() {
                 transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
                 className="text-5xl"
               >🫶</motion.div>
-              <h3 className="font-serif italic text-[22px] font-bold text-[#2C2720]">You’re on the list!</h3>
-              <p className="text-[#7C7267] text-[14px]">We’ll reach out when it’s your turn. Stay close.</p>
+              <h3 className="font-serif italic text-[22px] font-bold text-[#2C2720]">You&apos;re on the list!</h3>
+              <p className="text-[#7C7267] text-[14px]">We&apos;ll reach out when it&apos;s your turn. Stay close.</p>
             </motion.div>
           )}
         </AnimatePresence>
