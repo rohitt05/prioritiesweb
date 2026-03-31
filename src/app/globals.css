@@ -21,6 +21,8 @@ body {
   color: var(--ink);
   font-family: var(--font-dm-sans), system-ui, sans-serif;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 ::-webkit-scrollbar { width: 4px; }
@@ -35,7 +37,7 @@ body {
   content: '';
   position: fixed;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.028'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
   pointer-events: none;
   z-index: 9998;
 }
@@ -48,10 +50,10 @@ body {
 .squiggle::after {
   content: '';
   position: absolute;
-  left: 0; bottom: -8px;
+  left: 0; bottom: -6px;
   width: 100%; height: 10px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10'%3E%3Cpath d='M0,5 Q12.5,0 25,5 Q37.5,10 50,5 Q62.5,0 75,5 Q87.5,10 100,5' fill='none' stroke='%23D4A373' stroke-width='2.5'/%3E%3C/svg%3E");
-  background-size: 64px 10px;
+  background-size: 60px 10px;
   background-repeat: repeat-x;
 }
 
@@ -59,14 +61,18 @@ body {
 .card {
   background: var(--surface);
   border: 1px solid rgba(67,61,53,0.09);
-  border-radius: 24px;
+  border-radius: 20px;
   overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .card { border-radius: 24px; }
 }
 
 .card-surface {
   background: var(--surfaceLight);
   border: 1px solid rgba(67,61,53,0.07);
-  border-radius: 24px;
+  border-radius: 20px;
   overflow: hidden;
 }
 
@@ -75,7 +81,7 @@ body {
   background: #2C2720;
   color: #FDFCF0;
   font-weight: 600;
-  padding: 14px 32px;
+  padding: 14px 28px;
   border-radius: 100px;
   border: none;
   cursor: pointer;
@@ -85,14 +91,17 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .btn-ink:hover { background: #433D35; transform: translateY(-2px); }
+.btn-ink:active { transform: translateY(0); }
 
 .btn-outline {
   background: transparent;
   color: var(--primary);
   font-weight: 500;
-  padding: 14px 32px;
+  padding: 14px 28px;
   border-radius: 100px;
   border: 1.5px solid rgba(67,61,53,0.2);
   cursor: pointer;
@@ -101,21 +110,10 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .btn-outline:hover { border-color: #433D35; background: rgba(67,61,53,0.04); }
-
-/* ---- Scroll x ---- */
-.scroll-x { overflow-x: auto; scrollbar-width: none; }
-.scroll-x::-webkit-scrollbar { display: none; }
-
-/* ---- Label tag ---- */
-.label-tag {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--secondary);
-}
 
 /* ---- Marquee ---- */
 @keyframes marquee {
@@ -125,7 +123,8 @@ body {
 .marquee-inner {
   display: flex;
   width: max-content;
-  animation: marquee 28s linear infinite;
+  animation: marquee 30s linear infinite;
+  will-change: transform;
 }
 .marquee-inner:hover { animation-play-state: paused; }
 
@@ -149,3 +148,21 @@ body {
   transition: transform 0.25s ease;
 }
 .p-bubble:hover { transform: scale(1.06); }
+
+/* ---- Scrollbar hide utility ---- */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* ---- Touch improvements ---- */
+@media (hover: none) {
+  .btn-ink:hover { transform: none; }
+  .btn-outline:hover { background: transparent; }
+}
+
+/* ---- Safe area for notched phones ---- */
+@supports (padding: max(0px)) {
+  .safe-bottom { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+}

@@ -8,25 +8,38 @@ export default function WaitlistSection() {
   const [email, setEmail]      = useState('')
   const [submitted, setSubmit] = useState(false)
   const [loading, setLoading]  = useState(false)
+  const [error, setError]      = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email) return
     setLoading(true)
-    await new Promise(r => setTimeout(r, 1000))
-    setSubmit(true)
-    setLoading(false)
+    setError('')
+
+    try {
+      const res = await fetch('/api/waitlist', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email }),
+      })
+      if (!res.ok) throw new Error('failed')
+      setSubmit(true)
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <section id="waitlist" ref={ref} className="relative py-24 sm:py-36 px-5 sm:px-8 bg-[#F7F4E9] overflow-hidden">
+    <section id="waitlist" ref={ref} className="relative py-20 sm:py-28 lg:py-36 px-5 sm:px-8 bg-[#F7F4E9] overflow-hidden">
       {/* Bubble deco */}
       {['#FAD1D8','#DBC0E7','#C9E6EE','#A8E6CF','#FFD4B8'].map((c, i) => (
         <motion.div key={i}
-          className="absolute rounded-full pointer-events-none"
+          className="absolute rounded-full pointer-events-none hidden sm:block"
           style={{
-            width: 120 + i * 70, height: 120 + i * 70,
-            background: c, opacity: 0.35,
+            width: 100 + i * 60, height: 100 + i * 60,
+            background: c, opacity: 0.3,
             top:   i % 2 === 0 ? '-12%' : '55%',
             left:  i < 2 ? `-${4+i*2}%` : undefined,
             right: i >= 2 ? `-${2+i*2}%` : undefined,
@@ -36,22 +49,24 @@ export default function WaitlistSection() {
         />
       ))}
 
-      <div className="max-w-lg mx-auto text-center relative z-10 px-2">
+      <div className="max-w-lg mx-auto text-center relative z-10">
+        {/* Badge */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={inView ? { opacity: 1, scale: 1 } : {}}
           transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-white border border-[rgba(67,61,53,0.1)] shadow-sm mb-8 sm:mb-10"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[rgba(67,61,53,0.1)] shadow-sm mb-8"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-[#D4A373] animate-pulse" />
           <span className="text-[11px] sm:text-[12px] text-[#7C7267]">Limited early access spots</span>
         </motion.div>
 
+        {/* Headline */}
         <motion.h2
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.1, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-          className="font-serif text-[clamp(38px,8vw,88px)] font-bold text-[#2C2720] leading-[0.88] tracking-tight mb-6 sm:mb-8"
+          className="font-serif text-[clamp(34px,8vw,80px)] font-bold text-[#2C2720] leading-[0.9] tracking-tight mb-5"
         >
           Be first in line.
           <br />
@@ -62,7 +77,7 @@ export default function WaitlistSection() {
           initial={{ opacity: 0, y: 16 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.2, duration: 0.7 }}
-          className="text-[14px] sm:text-[15px] text-[#7C7267] mb-8 sm:mb-10 leading-relaxed"
+          className="text-[14px] sm:text-[15px] text-[#7C7267] mb-8 leading-relaxed px-2"
         >
           Join thousands already waiting. Get early access at launch
           and help shape what Priorities becomes.
@@ -77,31 +92,40 @@ export default function WaitlistSection() {
               animate={inView ? { opacity: 1, y: 0 } : {}}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ delay: 0.3, duration: 0.6 }}
-              className="flex flex-col sm:flex-row gap-3"
+              className="flex flex-col gap-3 w-full"
             >
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                required
-                className="flex-1 px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl bg-white border border-[rgba(67,61,53,0.12)] text-[#2C2720] placeholder-[#A89F8D] text-[13px] sm:text-[14px] outline-none focus:border-[#D4A373] transition-colors shadow-sm"
-              />
-              <motion.button
-                type="submit"
-                disabled={loading}
-                className="btn-ink justify-center sm:min-w-[150px] text-[13px] sm:text-[14px]"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.97 }}
-              >
-                {loading ? (
-                  <motion.div
-                    className="w-4 h-4 rounded-full border-2 border-[#FDFCF0]/40 border-t-[#FDFCF0]"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
-                  />
-                ) : 'Join Waitlist →'}
-              </motion.button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => { setEmail(e.target.value); setError('') }}
+                  placeholder="your@email.com"
+                  required
+                  className="flex-1 px-4 sm:px-5 py-4 rounded-2xl bg-white border border-[rgba(67,61,53,0.12)] text-[#2C2720] placeholder-[#A89F8D] text-[14px] outline-none focus:border-[#D4A373] transition-colors shadow-sm min-w-0"
+                />
+                <motion.button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-ink justify-center py-4 px-6 text-[14px] whitespace-nowrap"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  {loading ? (
+                    <motion.div
+                      className="w-4 h-4 rounded-full border-2 border-[#FDFCF0]/40 border-t-[#FDFCF0]"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
+                    />
+                  ) : 'Join Waitlist →'}
+                </motion.button>
+              </div>
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-[12px] text-red-400 text-left px-1"
+                >{error}</motion.p>
+              )}
             </motion.form>
           ) : (
             <motion.div
@@ -115,14 +139,15 @@ export default function WaitlistSection() {
                 initial={{ scale: 0, rotate: -20 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                className="text-5xl sm:text-6xl"
+                className="text-5xl"
               >🫶</motion.div>
-              <h3 className="font-serif italic text-[22px] sm:text-[24px] font-bold text-[#2C2720]">You're on the list!</h3>
-              <p className="text-[#7C7267] text-[13px] sm:text-[14px]">We'll reach out when it's your turn. Stay close.</p>
+              <h3 className="font-serif italic text-[22px] font-bold text-[#2C2720]">You’re on the list!</h3>
+              <p className="text-[#7C7267] text-[14px]">We’ll reach out when it’s your turn. Stay close.</p>
             </motion.div>
           )}
         </AnimatePresence>
-        <p className="mt-5 sm:mt-6 text-[11px] text-[#A89F8D]">No spam. No noise. Just priorities.</p>
+
+        <p className="mt-5 text-[11px] text-[#A89F8D]">No spam. No noise. Just priorities.</p>
       </div>
     </section>
   )
