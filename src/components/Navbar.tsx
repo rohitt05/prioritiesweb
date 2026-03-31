@@ -1,69 +1,49 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion'
-import { Heart } from 'lucide-react'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const { scrollY } = useScroll()
-
-  useMotionValueEvent(scrollY, 'change', (latest) => {
-    setScrolled(latest > 40)
-  })
+  useMotionValueEvent(scrollY, 'change', (v) => setScrolled(v > 40))
 
   return (
     <motion.nav
-      initial={{ y: -80, opacity: 0 }}
+      initial={{ y: -60, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled ? 'py-3' : 'py-6'
+      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled ? 'py-3 bg-[#FDFCF0]/90 backdrop-blur-md border-b border-[rgba(67,61,53,0.08)]' : 'py-5'
       }`}
     >
-      <div
-        className={`mx-auto max-w-6xl px-6 flex items-center justify-between rounded-2xl transition-all duration-500 ${
-          scrolled ? 'card-glass py-3 mx-4' : ''
-        }`}
-      >
+      <div className="max-w-5xl mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
-        <motion.div
-          className="flex items-center gap-2 cursor-pointer"
-          whileHover={{ scale: 1.03 }}
-        >
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #FF4D6D, #C77DFF)' }}>
-            <Heart size={16} fill="white" color="white" />
-          </div>
-          <span className="font-display font-bold text-xl tracking-tight">Priorities</span>
+        <motion.div className="flex items-center gap-2" whileHover={{ scale: 1.02 }}>
+          <span className="text-[22px] font-serif italic font-bold text-[#433D35] tracking-tight">priorities</span>
         </motion.div>
 
         {/* Links */}
         <div className="hidden md:flex items-center gap-8">
-          {['Features', 'For Who', 'About'].map((item, i) => (
-            <motion.a
+          {['Films', 'Priorities', 'Timeline', 'Features'].map((item) => (
+            <a
               key={item}
-              href={`#${item.toLowerCase().replace(' ', '-')}`}
-              className="text-sm text-white/60 hover:text-white transition-colors"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 * i + 0.5 }}
+              href={`#${item.toLowerCase()}`}
+              className="text-sm text-[#7C7267] hover:text-[#433D35] transition-colors"
             >
               {item}
-            </motion.a>
+            </a>
           ))}
         </div>
 
         {/* CTA */}
         <motion.a
           href="#waitlist"
-          className="btn-primary text-sm py-2.5 px-6 relative z-10"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          whileHover={{ scale: 1.05 }}
+          className="btn-ink text-sm py-2.5 px-6"
+          whileHover={{ scale: 1.04 }}
           whileTap={{ scale: 0.97 }}
         >
-          Get Early Access
+          Join Waitlist
         </motion.a>
       </div>
     </motion.nav>

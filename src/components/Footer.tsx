@@ -1,65 +1,45 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Heart, Instagram, Twitter } from 'lucide-react'
 
 export default function Footer() {
   return (
-    <footer className="relative z-10 border-t border-white/[0.06] py-12 px-6">
+    <footer className="bg-[#F7F4E9] border-t border-[rgba(67,61,53,0.08)] py-12 px-6">
       <div className="max-w-5xl mx-auto">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, #FF4D6D, #C77DFF)' }}
-            >
-              <Heart size={13} fill="white" color="white" />
-            </div>
-            <span className="font-display font-bold">Priorities</span>
+            <span className="text-[20px] font-serif italic font-bold text-[#433D35] tracking-tight">priorities</span>
           </div>
 
           {/* Links */}
-          <div className="flex items-center gap-6 text-sm text-white/40">
-            <a href="#features" className="hover:text-white transition-colors">Features</a>
-            <a href="#waitlist" className="hover:text-white transition-colors">Waitlist</a>
-            <a href="#" className="hover:text-white transition-colors">Privacy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms</a>
+          <div className="flex items-center gap-6 text-sm text-[#A89F8D]">
+            {['Films', 'Priorities', 'Timeline', 'Waitlist'].map(link => (
+              <a key={link} href={`#${link.toLowerCase()}`} className="hover:text-[#433D35] transition-colors">
+                {link}
+              </a>
+            ))}
           </div>
 
           {/* Social */}
-          <div className="flex items-center gap-4">
-            <motion.a
-              href="#"
-              className="w-9 h-9 rounded-xl card-glass flex items-center justify-center text-white/40 hover:text-white transition-colors"
-              whileHover={{ scale: 1.1, y: -2 }}
-            >
-              <Instagram size={16} />
-            </motion.a>
-            <motion.a
-              href="#"
-              className="w-9 h-9 rounded-xl card-glass flex items-center justify-center text-white/40 hover:text-white transition-colors"
-              whileHover={{ scale: 1.1, y: -2 }}
-            >
-              <Twitter size={16} />
-            </motion.a>
+          <div className="flex items-center gap-3">
+            {['Instagram', 'Twitter'].map(s => (
+              <motion.a
+                key={s}
+                href="#"
+                className="px-4 py-2 rounded-xl bg-white border border-[rgba(67,61,53,0.1)] text-xs text-[#7C7267] hover:text-[#433D35] transition-colors"
+                whileHover={{ scale: 1.05, y: -1 }}
+              >
+                {s}
+              </motion.a>
+            ))}
           </div>
         </div>
 
-        <motion.div
-          className="mt-8 pt-8 border-t border-white/[0.04] flex flex-col md:flex-row items-center justify-between gap-2"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-        >
-          <p className="text-xs text-white/20">
-            © 2026 Priorities. All rights reserved.
-          </p>
-          <p className="text-xs text-white/20 flex items-center gap-1">
-            Built with <Heart size={10} className="text-brand-rose" fill="#FF4D6D" /> for love, by Rohit
-          </p>
-        </motion.div>
+        <div className="mt-8 pt-8 border-t border-[rgba(67,61,53,0.06)] flex flex-col md:flex-row items-center justify-between gap-2">
+          <p className="text-xs text-[#A89F8D]">© 2026 Priorities. All rights reserved.</p>
+          <p className="text-xs text-[#A89F8D] font-serif italic">Built with love, for love — by Rohit</p>
+        </div>
       </div>
     </footer>
   )

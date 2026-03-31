@@ -1,84 +1,77 @@
 'use client'
 
 import { useRef } from 'react'
-import { motion, useInView, useScroll, useTransform } from 'framer-motion'
-import {
-  Pin, Camera, Mic, CalendarDays, Phone, Heart, Zap, Lock
-} from 'lucide-react'
+import { motion, useInView } from 'framer-motion'
 
 const features = [
   {
-    icon: Pin,
-    color: '#FF4D6D',
+    color: '#FAD1D8',
+    emoji: '📌',
     title: 'Priority List',
-    description: 'Pin the people that matter. They always appear first — no scrolling, no searching.',
+    description: 'Pin your people. Numbered, ranked, always at the top of your world.',
   },
   {
-    icon: Camera,
-    color: '#C77DFF',
-    title: 'Rich Media Sharing',
-    description: 'Share photos, videos, and audio notes with full camera controls — flash, zoom, focus.',
+    color: '#C9E6EE',
+    emoji: '🎬',
+    title: 'Films',
+    description: 'Share photos and videos that become beautiful day-by-day films.',
   },
   {
-    icon: Mic,
-    color: '#FF8FA3',
+    color: '#A8E6CF',
+    emoji: '🎙️',
     title: 'Audio Notes',
-    description: 'Sometimes a voice says more than words. Record and share audio moments instantly.',
+    description: 'Record a voice message. Sometimes your voice says more than words.',
   },
   {
-    icon: CalendarDays,
-    color: '#7B2FBE',
-    title: 'Shared Memories',
-    description: 'A timeline of your moments together. Scroll back through what you\'ve built.',
+    color: '#DBC0E7',
+    emoji: '📅',
+    title: 'Timeline',
+    description: 'Every moment archived in a shared timeline. Scroll back through your story.',
   },
   {
-    icon: Phone,
-    color: '#FF4D6D',
-    title: 'Voice & Video Calls',
-    description: 'Stay close no matter the distance. Crystal-clear calls built into the app.',
+    color: '#FFD4B8',
+    emoji: '📞',
+    title: 'Voice & Video',
+    description: 'Call the people you love — built right inside the app.',
   },
   {
-    icon: Heart,
-    color: '#C77DFF',
-    title: 'Emoji Reactions',
-    description: 'Quick, expressive reactions that feel personal — not just a like button.',
+    color: '#B8C88D',
+    emoji: '🔒',
+    title: 'Fully Private',
+    description: 'No algorithms. No public feed. Your connections, completely yours.',
   },
   {
-    icon: Zap,
-    color: '#FF8FA3',
-    title: 'No Algorithm',
-    description: 'You decide what you see. Chronological, personal, and always authentic.',
+    color: '#E9DFB4',
+    emoji: '🌟',
+    title: 'Bubble Map',
+    description: 'See your day visualized as beautiful colour bubbles — memories floating.',
   },
   {
-    icon: Lock,
-    color: '#7B2FBE',
-    title: 'Private by Design',
-    description: 'Your circle is yours. No strangers, no public feeds, no data harvesting.',
+    color: '#FEC8D8',
+    emoji: '💬',
+    title: 'Reactions',
+    description: 'Emoji reactions and quick replies that feel warm and personal.',
   },
 ]
 
 export default function FeaturesSection() {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-80px' })
-  const containerRef = useRef(null)
-  const { scrollYProgress } = useScroll({ target: containerRef, offset: ['start end', 'end start'] })
-  const y = useTransform(scrollYProgress, [0, 1], [60, -60])
 
   return (
-    <section id="features" ref={containerRef} className="relative z-10 py-24 px-6">
-      <div className="max-w-6xl mx-auto">
+    <section id="features" ref={ref} className="relative py-24 px-6 bg-[#F7F4E9]">
+      <div className="max-w-5xl mx-auto">
         <motion.div
-          ref={ref}
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center mb-16"
+          transition={{ duration: 0.7 }}
+          className="mb-16"
         >
-          <span className="text-xs font-semibold tracking-widest uppercase text-brand-mauve/80 mb-4 block">Features</span>
-          <h2 className="text-4xl md:text-5xl font-display font-bold">
+          <span className="label-tag block mb-3">Features</span>
+          <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#2C2720] leading-tight">
             Everything you need.
             <br />
-            <span className="gradient-text">Nothing you don't.</span>
+            <span className="italic squiggle">Nothing you don&apos;t.</span>
           </h2>
         </motion.div>
 
@@ -86,27 +79,21 @@ export default function FeaturesSection() {
           {features.map((f, i) => (
             <motion.div
               key={i}
-              className="card-glass rounded-2xl p-6 cursor-default group"
-              initial={{ opacity: 0, y: 50, scale: 0.95 }}
+              className="card-paper p-6 cursor-default"
+              initial={{ opacity: 0, y: 32, scale: 0.96 }}
               animate={inView ? { opacity: 1, y: 0, scale: 1 } : {}}
               transition={{ delay: i * 0.07, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              whileHover={{
-                y: -8,
-                scale: 1.03,
-                borderColor: f.color + '33',
-                transition: { duration: 0.25 },
-              }}
-              style={{ transformStyle: 'preserve-3d' }}
+              whileHover={{ y: -5, scale: 1.02, transition: { duration: 0.2 } }}
             >
               <motion.div
-                className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4"
-                style={{ background: f.color + '18' }}
-                whileHover={{ scale: 1.15, rotate: 5 }}
+                className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl mb-4"
+                style={{ background: f.color }}
+                whileHover={{ scale: 1.1, rotate: 5 }}
               >
-                <f.icon size={20} style={{ color: f.color }} />
+                {f.emoji}
               </motion.div>
-              <h3 className="font-semibold text-base mb-2 group-hover:text-white transition-colors">{f.title}</h3>
-              <p className="text-sm text-white/50 leading-relaxed">{f.description}</p>
+              <h3 className="font-semibold text-[#2C2720] mb-2">{f.title}</h3>
+              <p className="text-sm text-[#7C7267] leading-relaxed">{f.description}</p>
             </motion.div>
           ))}
         </div>
