@@ -6,7 +6,7 @@ Zero cost. No credit card. No Google Cloud Console.
 
 ## 1. Prepare the Sheet
 
-1. Open your Google Sheet (the one you already connected)
+1. Open your Google Sheet
 2. Rename the first tab to exactly: **Priorities Waitlist**
 3. Add headers in Row 1:
    - **A1:** Email
@@ -15,67 +15,72 @@ Zero cost. No credit card. No Google Cloud Console.
 
 ---
 
-## 2. Create the Apps Script Webhook
+## 2. Apps Script Code
 
 1. In your sheet → **Extensions → Apps Script**
 2. Delete all existing code and paste this:
 
 ```js
 function doPost(e) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet()
-    .getSheetByName('Priorities Waitlist');
-  var data  = JSON.parse(e.postData.contents);
-  sheet.appendRow([
-    data.email,
-    data.submittedAt,
-    data.source || 'website',
-  ]);
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet()
+      .getSheetByName('Priorities Waitlist');
+
+    var data = JSON.parse(e.postData.contents);
+
+    sheet.appendRow([
+      data.email        || '',
+      data.submittedAt  || new Date().toISOString(),
+      data.source       || 'website',
+    ]);
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: true }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch(err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: false, error: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// doGet so you can test the URL in a browser
+function doGet() {
   return ContentService
-    .createTextOutput(JSON.stringify({ ok: true }))
+    .createTextOutput(JSON.stringify({ status: 'Priorities Waitlist is live 🌸' }))
     .setMimeType(ContentService.MimeType.JSON);
 }
 ```
 
 3. Click **Deploy → New deployment**
-4. Click the gear icon ⚙️ next to "Select type" → choose **Web app**
-5. Set:
-   - **Execute as:** Me
-   - **Who has access:** Anyone
-6. Click **Deploy**
-7. Copy the **Web app URL** — it looks like:
-   `https://script.google.com/macros/s/AKfycb.../exec`
+4. Gear icon ⚙️ → **Web app**
+5. Execute as: **Me** | Who has access: **Anyone**
+6. Click **Deploy** → copy the Web App URL
+
+> **Important:** Every time you change the Apps Script code,
+> you must create a **New Deployment** (not update existing)
+> for the changes to take effect.
 
 ---
 
-## 3. Add the URL to your project
+## 3. Add env var
 
-Create or edit `.env.local` in the project root:
-
+`.env.local`:
 ```env
 GOOGLE_APPS_SCRIPT_URL=https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec
 ```
 
-> **Never commit `.env.local`** — it's already in `.gitignore`.
+Vercel: Settings → Environment Variables → same key + value.
 
 ---
 
-## 4. Deploy to Vercel
+## 4. Test the URL directly
 
-In **Vercel → Settings → Environment Variables**, add:
-
-| Name | Value |
-|---|---|
-| `GOOGLE_APPS_SCRIPT_URL` | your web app URL |
-
----
-
-## 5. Test
-
-```bash
-npm run dev
+Open this in your browser — if you see `{"status":"Priorities Waitlist is live 🌸"}` it’s working:
 ```
-
-Go to the waitlist section, submit an email — it should appear in the sheet within a few seconds.
+https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec
+```
 
 ---
 
@@ -86,5 +91,3 @@ Go to the waitlist section, submit an email — it should appear in the sheet wi
 | Script executions/day | 6,000 |
 | Concurrent executions | 30 |
 | Sheet rows | 10,000,000 |
-
-More than enough for a waitlist. 🌸
