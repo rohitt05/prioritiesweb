@@ -3,11 +3,11 @@ import { useRef, useState } from 'react'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 
 export default function WaitlistSection() {
-  const ref    = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-80px' })
-  const [email, setEmail]       = useState('')
-  const [submitted, setSubmit]  = useState(false)
-  const [loading, setLoading]   = useState(false)
+  const ref     = useRef(null)
+  const inView  = useInView(ref, { once: true, margin: '-80px' })
+  const [email, setEmail]      = useState('')
+  const [submitted, setSubmit] = useState(false)
+  const [loading, setLoading]  = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -19,39 +19,39 @@ export default function WaitlistSection() {
   }
 
   return (
-    <section id="waitlist" ref={ref} className="relative py-36 px-6 bg-[#F7F4E9] overflow-hidden">
+    <section id="waitlist" ref={ref} className="relative py-24 sm:py-36 px-5 sm:px-8 bg-[#F7F4E9] overflow-hidden">
       {/* Bubble deco */}
       {['#FAD1D8','#DBC0E7','#C9E6EE','#A8E6CF','#FFD4B8'].map((c, i) => (
         <motion.div key={i}
           className="absolute rounded-full pointer-events-none"
           style={{
-            width: 160+i*70, height: 160+i*70,
-            background:c, opacity:0.35,
-            top:    i%2===0?'-12%':'55%',
-            left:   i<2 ? `-${4+i*2}%` : undefined,
-            right:  i>=2 ? `-${2+i*2}%` : undefined,
+            width: 120 + i * 70, height: 120 + i * 70,
+            background: c, opacity: 0.35,
+            top:   i % 2 === 0 ? '-12%' : '55%',
+            left:  i < 2 ? `-${4+i*2}%` : undefined,
+            right: i >= 2 ? `-${2+i*2}%` : undefined,
           }}
-          animate={{ y:[0,-20,0], x:[0,8,0] }}
-          transition={{ delay:i*0.5, duration:8+i, repeat:Infinity, ease:'easeInOut' }}
+          animate={{ y: [0, -20, 0], x: [0, 8, 0] }}
+          transition={{ delay: i * 0.5, duration: 8 + i, repeat: Infinity, ease: 'easeInOut' }}
         />
       ))}
 
-      <div className="max-w-lg mx-auto text-center relative z-10">
+      <div className="max-w-lg mx-auto text-center relative z-10 px-2">
         <motion.div
-          initial={{ opacity:0, scale:0.9 }}
-          animate={inView ? { opacity:1, scale:1 } : {}}
-          transition={{ duration:0.6 }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-white border border-[rgba(67,61,53,0.1)] shadow-sm mb-10"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={inView ? { opacity: 1, scale: 1 } : {}}
+          transition={{ duration: 0.6 }}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-white border border-[rgba(67,61,53,0.1)] shadow-sm mb-8 sm:mb-10"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-[#D4A373] animate-pulse" />
-          <span className="text-[12px] text-[#7C7267]">Limited early access spots</span>
+          <span className="text-[11px] sm:text-[12px] text-[#7C7267]">Limited early access spots</span>
         </motion.div>
 
         <motion.h2
-          initial={{ opacity:0, y:30 }}
-          animate={inView ? { opacity:1, y:0 } : {}}
-          transition={{ delay:0.1, duration:0.9, ease:[0.16,1,0.3,1] }}
-          className="font-serif text-[clamp(44px,8vw,88px)] font-bold text-[#2C2720] leading-[0.88] tracking-tight mb-8"
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.1, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          className="font-serif text-[clamp(38px,8vw,88px)] font-bold text-[#2C2720] leading-[0.88] tracking-tight mb-6 sm:mb-8"
         >
           Be first in line.
           <br />
@@ -59,10 +59,10 @@ export default function WaitlistSection() {
         </motion.h2>
 
         <motion.p
-          initial={{ opacity:0, y:16 }}
-          animate={inView ? { opacity:1, y:0 } : {}}
-          transition={{ delay:0.2, duration:0.7 }}
-          className="text-[15px] text-[#7C7267] mb-10 leading-relaxed"
+          initial={{ opacity: 0, y: 16 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.2, duration: 0.7 }}
+          className="text-[14px] sm:text-[15px] text-[#7C7267] mb-8 sm:mb-10 leading-relaxed"
         >
           Join thousands already waiting. Get early access at launch
           and help shape what Priorities becomes.
@@ -73,10 +73,10 @@ export default function WaitlistSection() {
             <motion.form
               key="form"
               onSubmit={handleSubmit}
-              initial={{ opacity:0, y:16 }}
-              animate={inView ? { opacity:1, y:0 } : {}}
-              exit={{ opacity:0, scale:0.95 }}
-              transition={{ delay:0.3, duration:0.6 }}
+              initial={{ opacity: 0, y: 16 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
               className="flex flex-col sm:flex-row gap-3"
             >
               <input
@@ -85,20 +85,20 @@ export default function WaitlistSection() {
                 onChange={e => setEmail(e.target.value)}
                 placeholder="your@email.com"
                 required
-                className="flex-1 px-5 py-4 rounded-2xl bg-white border border-[rgba(67,61,53,0.12)] text-[#2C2720] placeholder-[#A89F8D] text-[14px] outline-none focus:border-[#D4A373] transition-colors shadow-sm"
+                className="flex-1 px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl bg-white border border-[rgba(67,61,53,0.12)] text-[#2C2720] placeholder-[#A89F8D] text-[13px] sm:text-[14px] outline-none focus:border-[#D4A373] transition-colors shadow-sm"
               />
               <motion.button
                 type="submit"
                 disabled={loading}
-                className="btn-ink justify-center min-w-[150px]"
-                whileHover={{ scale:1.05 }}
-                whileTap={{ scale:0.97 }}
+                className="btn-ink justify-center sm:min-w-[150px] text-[13px] sm:text-[14px]"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.97 }}
               >
                 {loading ? (
                   <motion.div
                     className="w-4 h-4 rounded-full border-2 border-[#FDFCF0]/40 border-t-[#FDFCF0]"
-                    animate={{ rotate:360 }}
-                    transition={{ duration:0.7, repeat:Infinity, ease:'linear' }}
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
                   />
                 ) : 'Join Waitlist →'}
               </motion.button>
@@ -106,23 +106,23 @@ export default function WaitlistSection() {
           ) : (
             <motion.div
               key="success"
-              initial={{ opacity:0, scale:0.88, y:20 }}
-              animate={{ opacity:1, scale:1, y:0 }}
-              transition={{ duration:0.7, ease:[0.16,1,0.3,1] }}
-              className="card p-10 flex flex-col items-center gap-4"
+              initial={{ opacity: 0, scale: 0.88, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+              className="card p-8 sm:p-10 flex flex-col items-center gap-4"
             >
               <motion.div
-                initial={{ scale:0, rotate:-20 }}
-                animate={{ scale:1, rotate:0 }}
-                transition={{ delay:0.2, type:'spring', stiffness:200 }}
-                className="text-6xl"
+                initial={{ scale: 0, rotate: -20 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                className="text-5xl sm:text-6xl"
               >🫶</motion.div>
-              <h3 className="font-serif italic text-[24px] font-bold text-[#2C2720]">You&apos;re on the list!</h3>
-              <p className="text-[#7C7267] text-[14px]">We&apos;ll reach out when it&apos;s your turn. Stay close.</p>
+              <h3 className="font-serif italic text-[22px] sm:text-[24px] font-bold text-[#2C2720]">You're on the list!</h3>
+              <p className="text-[#7C7267] text-[13px] sm:text-[14px]">We'll reach out when it's your turn. Stay close.</p>
             </motion.div>
           )}
         </AnimatePresence>
-        <p className="mt-6 text-[11px] text-[#A89F8D]">No spam. No noise. Just priorities.</p>
+        <p className="mt-5 sm:mt-6 text-[11px] text-[#A89F8D]">No spam. No noise. Just priorities.</p>
       </div>
     </section>
   )
