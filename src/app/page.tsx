@@ -1,24 +1,27 @@
 'use client'
 
-import Navbar from '@/components/Navbar'
-import HeroSection from '@/components/HeroSection'
-import DecoBubbles from '@/components/DecoBubbles'
-import FilmsSection from '@/components/FilmsSection'
+import Navbar         from '@/components/Navbar'
+import HeroSection    from '@/components/HeroSection'
+import MarqueeBand    from '@/components/MarqueeBand'
+import FilmsSection   from '@/components/FilmsSection'
 import PriorityCarousel from '@/components/PriorityCarousel'
-import TimelineSection from '@/components/TimelineSection'
-import FeaturesSection from '@/components/FeaturesSection'
+import TimelineSection  from '@/components/TimelineSection'
+import BentoFeatures  from '@/components/BentoFeatures'
+import AudienceSection from '@/components/AudienceSection'
 import WaitlistSection from '@/components/WaitlistSection'
-import Footer from '@/components/Footer'
+import Footer         from '@/components/Footer'
 
 export default function Home() {
   return (
-    <main className="relative bg-[#FDFCF0] overflow-x-hidden">
+    <main className="relative bg-[#FDFCF0] overflow-x-hidden paper">
       <Navbar />
       <HeroSection />
+      <MarqueeBand />
       <FilmsSection />
       <PriorityCarousel />
       <TimelineSection />
-      <FeaturesSection />
+      <BentoFeatures />
+      <AudienceSection />
       <WaitlistSection />
       <Footer />
     </main>

@@ -1,74 +1,90 @@
 'use client'
-
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 
-const audiences = [
+const cards = [
   {
     emoji: '💑',
     title: 'Couples',
-    subtitle: 'Especially long-distance',
-    description: 'A shared world that bridges the gap. Share your day, your voice, your thoughts — without the noise of social media.',
-    gradient: 'from-brand-rose/20 to-transparent',
+    sub: 'Especially long-distance',
+    color: '#FAD1D8',
+    desc: 'Share your day, your voice, your moments — without the noise of social media.',
   },
   {
     emoji: '✨',
     title: 'Best Friends',
-    subtitle: 'Your ride-or-dies',
-    description: 'A private space just for you two. No group chats, no drama — just the friendship that matters most.',
-    gradient: 'from-brand-mauve/20 to-transparent',
+    sub: 'Your ride-or-dies',
+    color: '#DBC0E7',
+    desc: 'A private space just for you two. The friendship that matters most.',
   },
   {
     emoji: '🏠',
     title: 'Trusted Circles',
-    subtitle: 'Close-knit groups',
-    description: 'For small groups who want something more intentional than a group chat. Shared memories, shared moments.',
-    gradient: 'from-brand-purple/20 to-transparent',
+    sub: 'Close-knit groups',
+    color: '#C9E6EE',
+    desc: 'For small groups who want something more intentional than a group chat.',
   },
 ]
 
 export default function AudienceSection() {
-  const ref = useRef(null)
+  const ref    = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-80px' })
 
   return (
-    <section id="for-who" ref={ref} className="relative z-10 py-24 px-6">
-      <div className="max-w-5xl mx-auto">
+    <section id="about" ref={ref} className="relative py-28 px-6 bg-[#FDFCF0] overflow-hidden">
+      {/* Huge italic background text */}
+      <motion.div
+        className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden select-none"
+        initial={{ opacity:0 }}
+        animate={inView ? { opacity:1 } : {}}
+        transition={{ duration:1 }}
+      >
+        <span
+          className="font-serif italic font-bold text-[clamp(80px,18vw,220px)] text-[rgba(67,61,53,0.04)] whitespace-nowrap leading-none"
+        >
+          priorities
+        </span>
+      </motion.div>
+
+      <div className="max-w-5xl mx-auto relative z-10">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.7 }}
+          initial={{ opacity:0, y:30 }}
+          animate={inView ? { opacity:1, y:0 } : {}}
+          transition={{ duration:0.8 }}
           className="text-center mb-16"
         >
-          <span className="text-xs font-semibold tracking-widest uppercase text-brand-pink/80 mb-4 block">For Who</span>
-          <h2 className="text-4xl md:text-5xl font-display font-bold">
-            Built for real
+          <span className="label-tag block mb-4">Built for</span>
+          <h2 className="font-serif text-[clamp(38px,6vw,72px)] font-bold text-[#2C2720] leading-[0.92] tracking-tight">
+            Real connections.
             <br />
-            <span className="gradient-text">connections.</span>
+            <em className="squiggle">Real people.</em>
           </h2>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {audiences.map((a, i) => (
+          {cards.map((c, i) => (
             <motion.div
               key={i}
-              className={`card-glass rounded-3xl p-8 bg-gradient-to-b ${a.gradient} relative overflow-hidden group`}
-              initial={{ opacity: 0, y: 50, rotateY: -10 }}
-              animate={inView ? { opacity: 1, y: 0, rotateY: 0 } : {}}
-              transition={{ delay: i * 0.15, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              whileHover={{ y: -8, scale: 1.02, transition: { duration: 0.25 } }}
-              style={{ transformStyle: 'preserve-3d', perspective: '800px' }}
+              className="card p-8 flex flex-col gap-4"
+              initial={{ opacity:0, y:40, rotateY:-8 }}
+              animate={inView ? { opacity:1, y:0, rotateY:0 } : {}}
+              transition={{ delay:i*0.15, duration:0.9, ease:[0.16,1,0.3,1] }}
+              whileHover={{ y:-8, scale:1.02, transition:{ duration:0.22 } }}
+              style={{ transformStyle:'preserve-3d', perspective:'800px' }}
             >
               <motion.div
-                className="text-5xl mb-5"
-                animate={{ rotate: [0, 5, -5, 0] }}
-                transition={{ delay: i, duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+                className="w-16 h-16 rounded-3xl flex items-center justify-center text-4xl"
+                style={{ background: c.color }}
+                animate={{ rotate:[0,4,-4,0] }}
+                transition={{ delay:i, duration:6, repeat:Infinity, ease:'easeInOut' }}
               >
-                {a.emoji}
+                {c.emoji}
               </motion.div>
-              <h3 className="text-xl font-display font-bold mb-1">{a.title}</h3>
-              <div className="text-sm text-white/40 mb-4">{a.subtitle}</div>
-              <p className="text-sm text-white/60 leading-relaxed">{a.description}</p>
+              <div>
+                <div className="font-serif italic font-bold text-[22px] text-[#2C2720]">{c.title}</div>
+                <div className="text-[12px] text-[#A89F8D] mt-0.5 label-tag">{c.sub}</div>
+              </div>
+              <p className="text-[14px] text-[#7C7267] leading-relaxed">{c.desc}</p>
             </motion.div>
           ))}
         </div>
