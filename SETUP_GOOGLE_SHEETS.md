@@ -1,69 +1,90 @@
-# Google Sheets Waitlist Setup
+# Google Sheets Waitlist — Apps Script Setup
 
-This guide connects the waitlist form to a Google Sheet called **"Priorities Waitlist"**.
-
----
-
-## 1. Create the Google Sheet
-
-1. Go to [sheets.google.com](https://sheets.google.com) and create a new spreadsheet
-2. Rename it: **Priorities Waitlist**
-3. Rename the first tab (bottom) to: **Priorities Waitlist**
-4. Add headers in Row 1:
-   - A1: `Email`
-   - B1: `Submitted At`
-   - C1: `Source`
-5. Copy the **Spreadsheet ID** from the URL:
-   ```
-   https://docs.google.com/spreadsheets/d/SPREADSHEET_ID_IS_HERE/edit
-   ```
+Zero cost. No credit card. No Google Cloud Console.
 
 ---
 
-## 2. Create a Google Service Account
+## 1. Prepare the Sheet
 
-1. Go to [console.cloud.google.com](https://console.cloud.google.com)
-2. Create a new project (or use existing)
-3. Enable **Google Sheets API**: APIs & Services → Enable APIs → search "Google Sheets API" → Enable
-4. Go to **IAM & Admin → Service Accounts** → Create Service Account
-   - Name: `priorities-waitlist`
-   - Click Create
-5. On the service account page → **Keys** tab → Add Key → JSON
-6. Download the JSON file — keep it safe, don't commit it
+1. Open your Google Sheet (the one you already connected)
+2. Rename the first tab to exactly: **Priorities Waitlist**
+3. Add headers in Row 1:
+   - **A1:** Email
+   - **B1:** Submitted At
+   - **C1:** Source
 
 ---
 
-## 3. Share the sheet with the service account
+## 2. Create the Apps Script Webhook
 
-1. Open your Google Sheet
-2. Click **Share**
-3. Paste the service account email (looks like `priorities-waitlist@project-name.iam.gserviceaccount.com`)
-4. Give it **Editor** access
-5. Click Send
+1. In your sheet → **Extensions → Apps Script**
+2. Delete all existing code and paste this:
 
----
-
-## 4. Add environment variables
-
-Create a `.env.local` file in the project root (never commit this):
-
-```env
-GOOGLE_SHEETS_SPREADSHEET_ID=your_spreadsheet_id_here
-GOOGLE_SERVICE_ACCOUNT_EMAIL=priorities-waitlist@your-project.iam.gserviceaccount.com
-GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQ...your key...\n-----END PRIVATE KEY-----\n"
+```js
+function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet()
+    .getSheetByName('Priorities Waitlist');
+  var data  = JSON.parse(e.postData.contents);
+  sheet.appendRow([
+    data.email,
+    data.submittedAt,
+    data.source || 'website',
+  ]);
+  return ContentService
+    .createTextOutput(JSON.stringify({ ok: true }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
 ```
 
-> **Important:** The private key must have literal `\n` characters (not real newlines) in the `.env.local` file.
-> Copy the `private_key` field from the downloaded JSON, and replace all real newlines with `\n`.
+3. Click **Deploy → New deployment**
+4. Click the gear icon ⚙️ next to "Select type" → choose **Web app**
+5. Set:
+   - **Execute as:** Me
+   - **Who has access:** Anyone
+6. Click **Deploy**
+7. Copy the **Web app URL** — it looks like:
+   `https://script.google.com/macros/s/AKfycb.../exec`
 
 ---
 
-## 5. Deploy to Vercel
+## 3. Add the URL to your project
 
-In your Vercel project → **Settings → Environment Variables**, add the same 3 variables.
+Create or edit `.env.local` in the project root:
+
+```env
+GOOGLE_APPS_SCRIPT_URL=https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec
+```
+
+> **Never commit `.env.local`** — it's already in `.gitignore`.
 
 ---
 
-## 6. Test it
+## 4. Deploy to Vercel
 
-Run `npm run dev`, go to the waitlist section, enter an email — it should appear in the sheet within seconds.
+In **Vercel → Settings → Environment Variables**, add:
+
+| Name | Value |
+|---|---|
+| `GOOGLE_APPS_SCRIPT_URL` | your web app URL |
+
+---
+
+## 5. Test
+
+```bash
+npm run dev
+```
+
+Go to the waitlist section, submit an email — it should appear in the sheet within a few seconds.
+
+---
+
+## Limits (all free)
+
+| What | Limit |
+|---|---|
+| Script executions/day | 6,000 |
+| Concurrent executions | 30 |
+| Sheet rows | 10,000,000 |
+
+More than enough for a waitlist. 🌸
