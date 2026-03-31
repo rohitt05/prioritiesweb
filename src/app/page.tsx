@@ -1,15 +1,16 @@
 'use client'
 
-import Navbar         from '@/components/Navbar'
-import HeroSection    from '@/components/HeroSection'
-import MarqueeBand    from '@/components/MarqueeBand'
-import FilmsSection   from '@/components/FilmsSection'
-import PriorityCarousel from '@/components/PriorityCarousel'
-import TimelineSection  from '@/components/TimelineSection'
-import BentoFeatures  from '@/components/BentoFeatures'
-import AudienceSection from '@/components/AudienceSection'
-import WaitlistSection from '@/components/WaitlistSection'
-import Footer         from '@/components/Footer'
+import Navbar              from '@/components/Navbar'
+import HeroSection         from '@/components/HeroSection'
+import MarqueeBand         from '@/components/MarqueeBand'
+import FilmsSection        from '@/components/FilmsSection'
+import PriorityCarousel    from '@/components/PriorityCarousel'
+import TimelineSection     from '@/components/TimelineSection'
+import BentoFeatures       from '@/components/BentoFeatures'
+import PositioningSection  from '@/components/PositioningSection'
+import AudienceSection     from '@/components/AudienceSection'
+import WaitlistSection     from '@/components/WaitlistSection'
+import Footer              from '@/components/Footer'
 
 export default function Home() {
   return (
@@ -21,6 +22,7 @@ export default function Home() {
       <PriorityCarousel />
       <TimelineSection />
       <BentoFeatures />
+      <PositioningSection />
       <AudienceSection />
       <WaitlistSection />
       <Footer />
