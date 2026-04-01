@@ -1,9 +1,4 @@
-import type { Metadata } from 'next'
-
-export const metadata: Metadata = {
-  title: 'Careers — Priorities',
-  description: "We care about 3 things: talent, ownership, and the hunger to build. If that's you — say hello.",
-}
+'use client'
 
 export default function CareersPage() {
   return (
@@ -158,18 +153,6 @@ export default function CareersPage() {
             width: '100%',
             border: 'none',
             background: 'transparent',
-          }}
-          onLoad={() => {
-            const handler = (e: MessageEvent) => {
-              if (e.data?.includes?.('Tally.FormHeightChanged')) {
-                try {
-                  const d = JSON.parse(e.data)
-                  const iframe = document.querySelector('iframe[title="Work at Priorities — Application Form"]') as HTMLIFrameElement
-                  if (iframe && d.height) iframe.style.height = d.height + 'px'
-                } catch {}
-              }
-            }
-            window.addEventListener('message', handler)
           }}
         />
       </div>
