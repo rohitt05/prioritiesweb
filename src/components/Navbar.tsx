@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'framer-motion'
 
 const links = [
@@ -32,10 +32,13 @@ function NavLink({ label, href, onClose }: { label: string; href: string; onClos
 }
 
 export default function Navbar() {
+  const [mounted, setMounted]   = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen]         = useState(false)
   const { scrollY } = useScroll()
   useMotionValueEvent(scrollY, 'change', v => setScrolled(v > 60))
+
+  useEffect(() => { setMounted(true) }, [])
 
   const logoLetters = 'priorities'.split('')
 
@@ -50,6 +53,7 @@ export default function Navbar() {
           paddingTop: scrolled ? '10px' : '18px',
           transition: 'padding 0.4s ease',
         }}
+        suppressHydrationWarning
       >
         <motion.div
           animate={{
@@ -122,30 +126,32 @@ export default function Navbar() {
               Join Waitlist
             </motion.a>
 
-            <motion.button
-              className="md:hidden relative w-9 h-9 flex items-center justify-center rounded-full"
-              onClick={() => setOpen(!open)}
-              whileTap={{ scale: 0.9 }}
-              aria-label={open ? 'Close menu' : 'Open menu'}
-            >
-              <motion.span
-                className="absolute w-[18px] h-[1.5px] bg-[#433D35] rounded-full"
-                animate={open ? { rotate: 45, y: 0 } : { rotate: 0, y: -4 }}
-                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              />
-              <motion.span
-                className="absolute w-[18px] h-[1.5px] bg-[#433D35] rounded-full"
-                animate={open ? { rotate: -45, y: 0 } : { rotate: 0, y: 4 }}
-                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              />
-            </motion.button>
+            {mounted && (
+              <motion.button
+                className="md:hidden relative w-9 h-9 flex items-center justify-center rounded-full"
+                onClick={() => setOpen(!open)}
+                whileTap={{ scale: 0.9 }}
+                aria-label={open ? 'Close menu' : 'Open menu'}
+              >
+                <motion.span
+                  className="absolute w-[18px] h-[1.5px] bg-[#433D35] rounded-full"
+                  animate={open ? { rotate: 45, y: 0 } : { rotate: 0, y: -4 }}
+                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                />
+                <motion.span
+                  className="absolute w-[18px] h-[1.5px] bg-[#433D35] rounded-full"
+                  animate={open ? { rotate: -45, y: 0 } : { rotate: 0, y: 4 }}
+                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                />
+              </motion.button>
+            )}
           </div>
         </motion.div>
       </motion.nav>
 
       {/* Mobile full-screen overlay */}
       <AnimatePresence>
-        {open && (
+        {mounted && open && (
           <motion.div
             key="mobile-drawer"
             initial={{ opacity: 0, clipPath: 'circle(0% at calc(100% - 36px) 36px)' }}
