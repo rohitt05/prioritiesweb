@@ -2,237 +2,315 @@
 
 import Link from 'next/link'
 import { motion, useInView } from 'framer-motion'
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 
-// ─── SVG face renderers (same as AudienceSection) ──────────────────────────────
-const FACES = [
-  (s: number, k: string) => (<svg key={k} width={s} height={s} viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#FAD1D8"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#FDDBB4"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#FDDBB4"/><ellipse cx="32" cy="18" rx="13" ry="10" fill="#3D2314"/><ellipse cx="20" cy="22" rx="5" ry="7" fill="#3D2314"/><ellipse cx="44" cy="22" rx="5" ry="7" fill="#3D2314"/><circle cx="26" cy="30" r="1.2" fill="#3D2314"/><circle cx="38" cy="30" r="1.2" fill="#3D2314"/><path d="M28 37 Q32 40 36 37" stroke="#C17B6B" strokeWidth="1.5" strokeLinecap="round" fill="none"/><ellipse cx="24" cy="36" rx="3" ry="1.5" fill="#F4A0A0" opacity="0.5"/><ellipse cx="40" cy="36" rx="3" ry="1.5" fill="#F4A0A0" opacity="0.5"/></svg>),
-  (s: number, k: string) => (<svg key={k} width={s} height={s} viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#DBC0E7"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#C68642"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#C68642"/><rect x="19" y="15" width="26" height="14" rx="6" fill="#2C1A0E"/><circle cx="26" cy="30" r="1.3" fill="#2C1A0E"/><circle cx="38" cy="30" r="1.3" fill="#2C1A0E"/><path d="M28 37 Q32 39 36 37" stroke="#A0522D" strokeWidth="1.5" strokeLinecap="round" fill="none"/></svg>),
-  (s: number, k: string) => (<svg key={k} width={s} height={s} viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#C9E6EE"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#8D5524"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#8D5524"/><circle cx="22" cy="22" r="8" fill="#1C0A00"/><circle cx="32" cy="18" r="9" fill="#1C0A00"/><circle cx="42" cy="22" r="8" fill="#1C0A00"/><circle cx="26" cy="30" r="1.3" fill="#1C0A00"/><circle cx="38" cy="30" r="1.3" fill="#1C0A00"/><path d="M28 37 Q32 40 36 37" stroke="#6B3A2A" strokeWidth="1.5" strokeLinecap="round" fill="none"/><ellipse cx="24" cy="36" rx="3" ry="1.5" fill="#C17B6B" opacity="0.4"/><ellipse cx="40" cy="36" rx="3" ry="1.5" fill="#C17B6B" opacity="0.4"/></svg>),
-  (s: number, k: string) => (<svg key={k} width={s} height={s} viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#D4E6D0"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#FDDBB4"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#FDDBB4"/><path d="M19 26 Q18 16 32 15 Q46 16 45 26 Q43 18 32 18 Q21 18 19 26Z" fill="#6B3F1E"/><circle cx="26" cy="30" r="1.3" fill="#3D2314"/><circle cx="38" cy="30" r="1.3" fill="#3D2314"/><path d="M28 37 Q32 39 36 37" stroke="#C17B6B" strokeWidth="1.5" strokeLinecap="round" fill="none"/></svg>),
-  (s: number, k: string) => (<svg key={k} width={s} height={s} viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#F0E6C8"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#C68642"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#C68642"/><ellipse cx="32" cy="17" rx="14" ry="8" fill="#5C3317"/><rect x="28" y="10" width="8" height="16" rx="4" fill="#5C3317"/><circle cx="26" cy="30" r="1.3" fill="#3D2314"/><circle cx="38" cy="30" r="1.3" fill="#3D2314"/><path d="M28 37 Q32 40 36 37" stroke="#A0522D" strokeWidth="1.5" strokeLinecap="round" fill="none"/><ellipse cx="24" cy="36" rx="3" ry="1.5" fill="#F4A0A0" opacity="0.5"/><ellipse cx="40" cy="36" rx="3" ry="1.5" fill="#F4A0A0" opacity="0.5"/></svg>),
-  (s: number, k: string) => (<svg key={k} width={s} height={s} viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#E8D5C4"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#4A2912"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#4A2912"/><ellipse cx="32" cy="19" rx="13" ry="8" fill="#1C0A00"/><circle cx="26" cy="30" r="1.3" fill="#1C0A00"/><circle cx="38" cy="30" r="1.3" fill="#1C0A00"/><path d="M28 37 Q32 39 36 37" stroke="#6B3A2A" strokeWidth="1.5" strokeLinecap="round" fill="none"/></svg>),
+// ─── SVG face data URIs (rendered onto canvas via drawImage) ─────────────────
+const FACE_SVGS = [
+  // 0: girl light skin, bun
+  `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#FAD1D8"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#FDDBB4"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#FDDBB4"/><ellipse cx="32" cy="18" rx="13" ry="10" fill="#3D2314"/><ellipse cx="20" cy="22" rx="5" ry="7" fill="#3D2314"/><ellipse cx="44" cy="22" rx="5" ry="7" fill="#3D2314"/><circle cx="26" cy="30" r="1.2" fill="#3D2314"/><circle cx="38" cy="30" r="1.2" fill="#3D2314"/><path d="M28 37 Q32 40 36 37" stroke="#C17B6B" stroke-width="1.5" stroke-linecap="round" fill="none"/><ellipse cx="24" cy="36" rx="3" ry="1.5" fill="#F4A0A0" opacity="0.5"/><ellipse cx="40" cy="36" rx="3" ry="1.5" fill="#F4A0A0" opacity="0.5"/></svg>`,
+  // 1: boy medium skin
+  `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#DBC0E7"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#C68642"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#C68642"/><rect x="19" y="15" width="26" height="14" rx="6" fill="#2C1A0E"/><circle cx="26" cy="30" r="1.3" fill="#2C1A0E"/><circle cx="38" cy="30" r="1.3" fill="#2C1A0E"/><path d="M28 37 Q32 39 36 37" stroke="#A0522D" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>`,
+  // 2: girl dark skin, curly
+  `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#C9E6EE"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#8D5524"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#8D5524"/><circle cx="22" cy="22" r="8" fill="#1C0A00"/><circle cx="32" cy="18" r="9" fill="#1C0A00"/><circle cx="42" cy="22" r="8" fill="#1C0A00"/><circle cx="26" cy="30" r="1.3" fill="#1C0A00"/><circle cx="38" cy="30" r="1.3" fill="#1C0A00"/><path d="M28 37 Q32 40 36 37" stroke="#6B3A2A" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>`,
+  // 3: boy light skin, wavy
+  `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#D4E6D0"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#FDDBB4"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#FDDBB4"/><path d="M19 26 Q18 16 32 15 Q46 16 45 26 Q43 18 32 18 Q21 18 19 26Z" fill="#6B3F1E"/><circle cx="26" cy="30" r="1.3" fill="#3D2314"/><circle cx="38" cy="30" r="1.3" fill="#3D2314"/><path d="M28 37 Q32 39 36 37" stroke="#C17B6B" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>`,
+  // 4: girl medium skin, ponytail
+  `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#F0E6C8"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#C68642"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#C68642"/><ellipse cx="32" cy="17" rx="14" ry="8" fill="#5C3317"/><rect x="28" y="10" width="8" height="16" rx="4" fill="#5C3317"/><circle cx="26" cy="30" r="1.3" fill="#3D2314"/><circle cx="38" cy="30" r="1.3" fill="#3D2314"/><path d="M28 37 Q32 40 36 37" stroke="#A0522D" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>`,
+  // 5: boy dark skin, fade
+  `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#E8D5C4"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#4A2912"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#4A2912"/><ellipse cx="32" cy="19" rx="13" ry="8" fill="#1C0A00"/><circle cx="26" cy="30" r="1.3" fill="#1C0A00"/><circle cx="38" cy="30" r="1.3" fill="#1C0A00"/><path d="M28 37 Q32 39 36 37" stroke="#6B3A2A" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>`,
+  // 6: YOU avatar
+  `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#FDFCF0"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#FDDBB4"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#FDDBB4"/><path d="M19 26 Q18 16 32 15 Q46 16 45 26 Q43 18 32 18 Q21 18 19 26Z" fill="#4A2912"/><circle cx="26" cy="30" r="1.5" fill="#2C1A0E"/><circle cx="38" cy="30" r="1.5" fill="#2C1A0E"/><path d="M27 36 Q32 40 37 36" stroke="#C17B6B" stroke-width="2" stroke-linecap="round" fill="none"/><ellipse cx="24" cy="35" rx="3.5" ry="2" fill="#F4A0A0" opacity="0.45"/><ellipse cx="40" cy="35" rx="3.5" ry="2" fill="#F4A0A0" opacity="0.45"/></svg>`,
 ]
 
-function YouAvatar({ size }: { size: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
-      <circle cx="32" cy="32" r="32" fill="#FDFCF0"/>
-      <ellipse cx="32" cy="38" rx="16" ry="14" fill="#FDDBB4"/>
-      <ellipse cx="32" cy="28" rx="13" ry="13" fill="#FDDBB4"/>
-      <path d="M19 26 Q18 16 32 15 Q46 16 45 26 Q43 18 32 18 Q21 18 19 26Z" fill="#4A2912"/>
-      <circle cx="26" cy="30" r="1.5" fill="#2C1A0E"/>
-      <circle cx="38" cy="30" r="1.5" fill="#2C1A0E"/>
-      <path d="M27 36 Q32 40 37 36" stroke="#C17B6B" strokeWidth="2" strokeLinecap="round" fill="none"/>
-      <ellipse cx="24" cy="35" rx="3.5" ry="2" fill="#F4A0A0" opacity="0.45"/>
-      <ellipse cx="40" cy="35" rx="3.5" ry="2" fill="#F4A0A0" opacity="0.45"/>
-    </svg>
-  )
-}
-
-// 9 friends: leftPct kept 5–88 so they never clip left/right edge
-// fallFrom is how far above their final resting spot they start (px)
-// different sizes so they overlap and feel alive
-const FRIENDS = [
-  { id: 1, faceIdx: 0, label: 'the creative one', size: 112, leftPct: 5,  delay: 0.05, z: 3,  fallFrom: 520 },
-  { id: 2, faceIdx: 1, label: 'the fun one',       size: 134, leftPct: 15, delay: 0.18, z: 5,  fallFrom: 600 },
-  { id: 3, faceIdx: 2, label: 'the smart one',     size: 98,  leftPct: 25, delay: 0.09, z: 2,  fallFrom: 480 },
-  { id: 4, faceIdx: 3, label: 'your ride-or-die',  size: 144, leftPct: 36, delay: 0.26, z: 6,  fallFrom: 640 },
-  { id: 5, faceIdx: 4, label: 'who feeds you',     size: 106, leftPct: 56, delay: 0.13, z: 4,  fallFrom: 500 },
-  { id: 6, faceIdx: 5, label: 'your rock',         size: 130, leftPct: 65, delay: 0.30, z: 7,  fallFrom: 580 },
-  { id: 7, faceIdx: 1, label: 'the dreamer',       size: 94,  leftPct: 74, delay: 0.07, z: 2,  fallFrom: 460 },
-  { id: 8, faceIdx: 0, label: 'the wise one',      size: 120, leftPct: 81, delay: 0.21, z: 5,  fallFrom: 560 },
-  { id: 9, faceIdx: 2, label: 'your person',       size: 102, leftPct: 88, delay: 0.15, z: 3,  fallFrom: 510 },
+const FRIENDS_DATA = [
+  { faceIdx: 0, label: 'the creative one', r: 56 },
+  { faceIdx: 1, label: 'the fun one',       r: 64 },
+  { faceIdx: 2, label: 'the smart one',     r: 50 },
+  { faceIdx: 3, label: 'your ride-or-die',  r: 68 },
+  { faceIdx: 4, label: 'who feeds you',     r: 54 },
+  { faceIdx: 5, label: 'your rock',         r: 62 },
+  { faceIdx: 1, label: 'the dreamer',       r: 48 },
+  { faceIdx: 0, label: 'the wise one',      r: 58 },
+  { faceIdx: 2, label: 'your person',       r: 52 },
 ]
+// YOU
+const YOU_DATA = { faceIdx: 6, label: 'you', r: 70 }
 
-// ─── Single draggable friend ───────────────────────────────────────────────────
-function FriendAvatar({ faceIdx, label, size, leftPct, delay, z, fallFrom }: typeof FRIENDS[0]) {
-  const [landed, setLanded] = useState(false)
-  const [dragging, setDragging] = useState(false)
+// ─── Physics Stage ────────────────────────────────────────────────────────────
+function PhysicsStage({ trigger }: { trigger: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const engineRef = useRef<any>(null)
+  const runnerRef = useRef<any>(null)
+  const renderRef = useRef<any>(null)
+  const imagesRef = useRef<HTMLImageElement[]>([])
+  const [ready, setReady] = useState(false)
+
+  const CANVAS_H = 420
+
+  // Load all face images from inline SVG
+  useEffect(() => {
+    let loaded = 0
+    const imgs: HTMLImageElement[] = []
+    FACE_SVGS.forEach((svg, i) => {
+      const img = new window.Image()
+      const blob = new Blob([svg], { type: 'image/svg+xml' })
+      img.src = URL.createObjectURL(blob)
+      img.onload = () => {
+        loaded++
+        if (loaded === FACE_SVGS.length) setReady(true)
+      }
+      imgs[i] = img
+    })
+    imagesRef.current = imgs
+  }, [])
+
+  useEffect(() => {
+    if (!ready || !trigger) return
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const W = canvas.offsetWidth
+    const H = CANVAS_H
+    canvas.width = W
+    canvas.height = H
+
+    // Dynamically import matter-js
+    import('matter-js').then((Matter) => {
+      const { Engine, Render, Runner, Bodies, Body, Composite, Mouse, MouseConstraint, Events, World } = Matter
+
+      const engine = Engine.create({ gravity: { y: 2.2 } })
+      engineRef.current = engine
+
+      // ── Walls & floor (invisible static bodies) ──
+      const wallOpts = { isStatic: true, render: { visible: false }, friction: 0.3, restitution: 0.3 }
+      const floor  = Bodies.rectangle(W / 2, H + 25, W + 100, 50, wallOpts)
+      const wallL  = Bodies.rectangle(-25, H / 2, 50, H * 2, wallOpts)
+      const wallR  = Bodies.rectangle(W + 25, H / 2, 50, H * 2, wallOpts)
+      Composite.add(engine.world, [floor, wallL, wallR])
+
+      // ── Drop bodies ──
+      const allData = [...FRIENDS_DATA, YOU_DATA]
+      const bodies: any[] = []
+
+      allData.forEach((d, i) => {
+        const isYou = i === allData.length - 1
+        // spread drop x across width, your avatar near center
+        const spreadX = isYou
+          ? W / 2
+          : (i / (FRIENDS_DATA.length - 1)) * (W - d.r * 2) + d.r
+        // stagger drop height so they don't all collide at once
+        const startY = -(i * 90 + 60)
+        const body = Bodies.circle(spreadX, startY, d.r, {
+          restitution: 0.25,   // slight bounce
+          friction: 0.6,
+          frictionAir: 0.01,
+          density: 0.003,
+          render: { visible: false }, // we draw manually
+          label: isYou ? 'you' : d.label,
+        })
+        // attach meta for drawing
+        ;(body as any).__faceIdx = d.faceIdx
+        ;(body as any).__r = d.r
+        ;(body as any).__label = d.label
+        ;(body as any).__isYou = isYou
+        bodies.push(body)
+      })
+
+      Composite.add(engine.world, bodies)
+
+      // ── Mouse drag (real physics push) ──
+      const mouse = Mouse.create(canvas)
+      const mc = MouseConstraint.create(engine, {
+        mouse,
+        constraint: { stiffness: 0.2, render: { visible: false } },
+      })
+      Composite.add(engine.world, mc)
+
+      // ── Custom canvas render loop ──
+      const ctx = canvas.getContext('2d')!
+      const imgs = imagesRef.current
+
+      const runner = Runner.create()
+      runnerRef.current = runner
+      Runner.run(runner, engine)
+
+      function drawFrame() {
+        ctx.clearRect(0, 0, W, H)
+
+        const allBodies = Composite.allBodies(engine.world)
+        allBodies.forEach((body: any) => {
+          if (body.isStatic) return
+          const { x, y } = body.position
+          const r = body.__r as number
+          const faceIdx = body.__faceIdx as number
+          const label = body.__label as string
+          const isYou = body.__isYou as boolean
+          if (r === undefined) return
+
+          ctx.save()
+          ctx.translate(x, y)
+          ctx.rotate(body.angle)
+
+          // clip to circle
+          ctx.beginPath()
+          ctx.arc(0, 0, r, 0, Math.PI * 2)
+          ctx.clip()
+
+          // draw face
+          if (imgs[faceIdx]?.complete) {
+            ctx.drawImage(imgs[faceIdx], -r, -r, r * 2, r * 2)
+          } else {
+            ctx.fillStyle = '#2A2824'
+            ctx.fill()
+          }
+
+          ctx.restore()
+
+          // ring for YOU
+          if (isYou) {
+            ctx.save()
+            ctx.translate(x, y)
+            ctx.beginPath()
+            ctx.arc(0, 0, r + 3, 0, Math.PI * 2)
+            ctx.strokeStyle = '#D4A373'
+            ctx.lineWidth = 3.5
+            ctx.stroke()
+            // glow
+            ctx.beginPath()
+            ctx.arc(0, 0, r + 10, 0, Math.PI * 2)
+            ctx.strokeStyle = 'rgba(212,163,115,0.18)'
+            ctx.lineWidth = 14
+            ctx.stroke()
+            ctx.restore()
+          } else {
+            // subtle ring
+            ctx.save()
+            ctx.translate(x, y)
+            ctx.beginPath()
+            ctx.arc(0, 0, r + 1, 0, Math.PI * 2)
+            ctx.strokeStyle = 'rgba(255,255,255,0.06)'
+            ctx.lineWidth = 2
+            ctx.stroke()
+            ctx.restore()
+          }
+
+          // label below circle
+          ctx.save()
+          ctx.translate(x, y)
+          ctx.font = `${isYou ? 700 : 500} ${Math.max(9, r * 0.18)}px "Inter", sans-serif`
+          ctx.fillStyle = isYou ? '#C17B6B' : 'rgba(90,85,79,0.85)'
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'top'
+          ctx.letterSpacing = isYou ? '0.12em' : '0.04em'
+          ctx.fillText(isYou ? 'YOU' : label, 0, r + 5)
+          ctx.restore()
+        })
+
+        requestAnimationFrame(drawFrame)
+      }
+      drawFrame()
+    })
+
+    return () => {
+      if (runnerRef.current) {
+        import('matter-js').then(({ Runner, Engine }) => {
+          Runner.stop(runnerRef.current)
+          Engine.clear(engineRef.current)
+        })
+      }
+    }
+  }, [ready, trigger])
 
   return (
-    <motion.div
-      // free drag — no constraints, fully interactive
-      drag={landed}
-      dragElastic={0.18}
-      dragMomentum
-      whileDrag={{ scale: 1.13, zIndex: 80, cursor: 'grabbing' }}
-      onDragStart={() => setDragging(true)}
-      onDragEnd={() => setDragging(false)}
-      // start high above, fall down to bottom:0
-      initial={{ y: -fallFrom, opacity: 0, scale: 0.55, rotate: (leftPct % 2 === 0 ? -8 : 8) }}
-      animate={{
-        y: 0,
-        opacity: 1,
-        scale: 1,
-        rotate: 0,
-        transition: {
-          delay,
-          duration: 0.9,
-          type: 'spring',
-          stiffness: 100,
-          damping: 11,
-          onComplete: () => setLanded(true),
-        },
-      }}
-      whileHover={landed && !dragging ? {
-        y: -14,
-        scale: 1.08,
-        transition: { type: 'spring', stiffness: 360, damping: 16 },
-      } : {}}
+    <canvas
+      ref={canvasRef}
       style={{
-        position: 'absolute',
-        // center avatar on leftPct, clamped to stay fully on screen
-        left: `calc(${leftPct}% - ${size / 2}px)`,
-        bottom: 16, // small ground margin
-        zIndex: dragging ? 80 : z,
-        cursor: landed ? 'grab' : 'default',
-        touchAction: 'none',
+        width: '100%',
+        height: CANVAS_H,
+        display: 'block',
+        cursor: 'grab',
+        background: 'transparent',
       }}
-      className="flex flex-col items-center gap-1 select-none"
-    >
-      <div
-        className="rounded-full overflow-hidden"
-        style={{
-          width: size,
-          height: size,
-          boxShadow: '0 10px 40px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.3)',
-          border: '2.5px solid rgba(255,255,255,0.07)',
-        }}
-      >
-        {FACES[faceIdx](size, `ff-${faceIdx}-${leftPct}`)}
-      </div>
-      <span style={{
-        fontSize: Math.max(9, size * 0.082),
-        color: '#4A4540',
-        whiteSpace: 'nowrap',
-        fontWeight: 500,
-        letterSpacing: '0.04em',
-      }}>
-        {label}
-      </span>
-    </motion.div>
+    />
   )
 }
 
-// ─── My static avatar — center bottom, never falls, never draggable ─────────
-function MyAvatar() {
-  const size = 140
-  return (
-    <div
-      className="absolute flex flex-col items-center gap-1 select-none"
-      style={{ left: `calc(50% - ${size / 2}px)`, bottom: 16, zIndex: 20 }}
-    >
-      {/* pulse glow */}
-      <motion.div
-        className="absolute rounded-full pointer-events-none"
-        style={{
-          width: size + 56, height: size + 56,
-          top: -28, left: -28,
-          background: 'radial-gradient(circle, rgba(193,123,107,0.40) 0%, transparent 65%)',
-        }}
-        animate={{ scale: [1, 1.25, 1], opacity: [0.55, 0.9, 0.55] }}
-        transition={{ duration: 3.6, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <div
-        className="rounded-full overflow-hidden relative"
-        style={{
-          width: size, height: size,
-          border: '3.5px solid #D4A373',
-          boxShadow: '0 8px 48px rgba(212,163,115,0.50), 0 2px 12px rgba(0,0,0,0.35)',
-        }}
-      >
-        <YouAvatar size={size} />
-      </div>
-      <span style={{
-        fontSize: 11,
-        color: '#C17B6B',
-        fontWeight: 700,
-        letterSpacing: '0.14em',
-        textTransform: 'uppercase',
-      }}>
-        you
-      </span>
-    </div>
-  )
-}
-
-// ─── The whole animated block — client-only mount to avoid hydration errors ───
+// ─── Animated block ───────────────────────────────────────────────────────────
 function AnimatedBlock({ inView }: { inView: boolean }) {
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => { setMounted(true) }, [])
-
   return (
     <div
       className="relative w-full border-t border-[#1E1C18]"
-      style={{
-        background: 'linear-gradient(to top, #0A0908 0%, #100F0D 100%)',
-        // tall enough for text + avatars; overflow visible so avatars can peek above
-        paddingBottom: 0,
-        overflow: 'visible',
-      }}
+      style={{ background: 'linear-gradient(to top, #0A0908 0%, #100F0D 100%)' }}
     >
-      {/* Tagline text — sits at top of this block */}
-      <div className="relative z-10 max-w-5xl mx-auto px-5 sm:px-8 pt-20 pb-6 text-center">
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="text-[#3D3830] text-xs tracking-widest uppercase font-semibold mb-5"
-        >
-          me and my 9 idiots
-        </motion.p>
-        <motion.h2
-          initial={{ opacity: 0, y: 30 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.22, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="font-serif italic text-[36px] sm:text-[52px] md:text-[64px] font-bold text-[#F5F0E8] leading-[1.05] mb-3"
-        >
-          built with love,<br />
-          <span className="text-[#C17B6B]">for love —</span>
-        </motion.h2>
+      {/* ── Tagline ── */}
+      <div className="relative z-10 max-w-4xl mx-auto px-5 sm:px-8 pt-20 pb-10 text-center">
         <motion.p
           initial={{ opacity: 0, y: 16 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.36, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="text-[#4A4540] text-base sm:text-lg font-light italic mb-2"
+          transition={{ delay: 0.05, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="text-[#3D3830] text-[11px] tracking-[0.22em] uppercase font-semibold mb-8"
+        >
+          me and my 9 idiots
+        </motion.p>
+
+        <motion.h2
+          initial={{ opacity: 0, y: 40 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.15, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            fontFamily: 'Georgia, "Times New Roman", serif',
+            fontStyle: 'italic',
+            fontWeight: 700,
+            fontSize: 'clamp(48px, 8vw, 96px)',
+            lineHeight: 1.0,
+            color: '#F5F0E8',
+            marginBottom: '0.3em',
+            letterSpacing: '-0.02em',
+          }}
+        >
+          built with love,
+          <br />
+          <span style={{ color: '#C17B6B' }}>for love —</span>
+        </motion.h2>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.32, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            fontFamily: 'Georgia, serif',
+            fontStyle: 'italic',
+            fontSize: 'clamp(18px, 2.5vw, 28px)',
+            color: '#5A5550',
+            marginBottom: '2rem',
+            fontWeight: 400,
+          }}
         >
           by your lover 🌸
         </motion.p>
+
         <motion.p
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : {}}
-          transition={{ delay: 0.6, duration: 0.5 }}
-          className="text-[#2A2824] text-[11px] tracking-wide"
+          transition={{ delay: 0.7, duration: 0.6 }}
+          className="text-[#2A2824] text-[11px] tracking-widest uppercase"
         >
-          drag them around ↓
+          grab &amp; drag them around
         </motion.p>
       </div>
 
-      {/*
-        Avatar stage:
-        - position: relative so avatars with bottom:16 land at the bottom of this div
-        - overflow: visible so they can fall through/above the text visually
-        - height: 220px gives them ground space
-        - NO overflow hidden — fully free
-      */}
-      <div
-        className="relative w-full"
-        style={{ height: 220, overflow: 'visible' }}
-      >
-        {/* My avatar always present (no animation needed, it’s static) */}
-        <MyAvatar />
-
-        {/* 9 friends only mount client-side */}
-        {mounted && FRIENDS.map(a => (
-          <FriendAvatar key={a.id} {...a} />
-        ))}
-      </div>
+      {/* ── Physics canvas ── */}
+      <PhysicsStage trigger={inView} />
 
       {/* ground fade */}
       <div
-        className="h-20 w-full"
-        style={{ background: 'linear-gradient(to top, #0A0908 60%, transparent 100%)', marginTop: -20 }}
+        style={{
+          height: 60,
+          marginTop: -60,
+          background: 'linear-gradient(to top, #0A0908 40%, transparent 100%)',
+          pointerEvents: 'none',
+          position: 'relative',
+          zIndex: 2,
+        }}
       />
     </div>
   )
@@ -245,7 +323,7 @@ export default function Footer() {
   const inView = useInView(sectionRef, { once: true, margin: '0px 0px -80px 0px' })
 
   return (
-    <footer ref={sectionRef} className="bg-[#100F0D] text-[#9A9589]" style={{ overflow: 'visible' }}>
+    <footer ref={sectionRef} className="bg-[#100F0D] text-[#9A9589] overflow-hidden">
 
       {/* ── Links + brand grid ── */}
       <div className="max-w-5xl mx-auto px-5 sm:px-8 pt-16 pb-14">
@@ -296,7 +374,7 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* ── Animated section ── */}
+      {/* ── Animated physics section ── */}
       <AnimatedBlock inView={inView} />
 
     </footer>
