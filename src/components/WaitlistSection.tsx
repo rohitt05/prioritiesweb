@@ -12,19 +12,28 @@ export default function WaitlistSection() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email) return
+    console.log('[waitlist] form submitted, email:', email)
+    if (!email) {
+      console.log('[waitlist] email is empty, returning')
+      return
+    }
     setLoading(true)
     setError('')
 
     try {
+      console.log('[waitlist] calling /api/waitlist...')
       const res = await fetch('/api/waitlist', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ email }),
       })
+      console.log('[waitlist] response status:', res.status)
+      const data = await res.json()
+      console.log('[waitlist] response data:', data)
       if (!res.ok) throw new Error('failed')
       setSubmit(true)
-    } catch {
+    } catch (err) {
+      console.error('[waitlist] fetch error:', err)
       setError('Something went wrong. Please try again.')
     } finally {
       setLoading(false)
@@ -33,7 +42,6 @@ export default function WaitlistSection() {
 
   return (
     <section id="waitlist" ref={ref} className="relative py-20 sm:py-28 lg:py-36 px-5 sm:px-8 bg-[#F7F4E9] overflow-hidden">
-      {/* Bubble deco */}
       {['#FAD1D8','#DBC0E7','#C9E6EE','#A8E6CF','#FFD4B8'].map((c, i) => (
         <motion.div key={i}
           className="absolute rounded-full pointer-events-none hidden sm:block"
@@ -50,7 +58,6 @@ export default function WaitlistSection() {
       ))}
 
       <div className="max-w-lg mx-auto text-center relative z-10">
-        {/* Badge */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={inView ? { opacity: 1, scale: 1 } : {}}
@@ -61,7 +68,6 @@ export default function WaitlistSection() {
           <span className="text-[11px] sm:text-[12px] text-[#7C7267]">Limited early access spots</span>
         </motion.div>
 
-        {/* Headline */}
         <motion.h2
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
