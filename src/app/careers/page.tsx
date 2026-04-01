@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Careers — Priorities',
-  description: 'We care about 3 things: talent, ownership, and the hunger to build. If that's you — say hello.',
+  description: "We care about 3 things: talent, ownership, and the hunger to build. If that's you — say hello.",
 }
 
 export default function CareersPage() {
@@ -160,7 +160,6 @@ export default function CareersPage() {
             background: 'transparent',
           }}
           onLoad={() => {
-            // Tally auto-resize via postMessage
             const handler = (e: MessageEvent) => {
               if (e.data?.includes?.('Tally.FormHeightChanged')) {
                 try {
