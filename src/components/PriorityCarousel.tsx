@@ -79,9 +79,9 @@ export default function PriorityCarousel() {
             </AnimatePresence>
           </motion.div>
 
-          {/* Right bubbles + phone */}
-          <div className="flex-1 w-full">
-            <motion.div className="flex gap-4 sm:gap-6 mb-6 sm:mb-8 overflow-x-auto pb-2 scrollbar-hide">
+          {/* Right bubbles + phone — centered on mobile */}
+          <div className="flex-1 w-full flex flex-col items-center lg:items-start">
+            <motion.div className="flex gap-4 sm:gap-6 mb-6 sm:mb-8 overflow-x-auto pb-2 scrollbar-hide justify-center lg:justify-start w-full">
               {priorities.map((p, i) => (
                 <motion.button
                   key={i}
@@ -120,7 +120,7 @@ export default function PriorityCarousel() {
               initial={{ opacity: 0, x: 60, rotateY: 18, filter: 'blur(6px)' }}
               animate={inView ? { opacity: 1, x: 0, rotateY: 0, filter: 'blur(0px)' } : {}}
               transition={{ delay: 0.5, duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-              className="card p-4 sm:p-5 max-w-[280px] sm:max-w-xs"
+              className="card p-4 sm:p-5 w-full max-w-[280px] sm:max-w-xs mx-auto lg:mx-0"
               style={{ transformStyle: 'preserve-3d', perspective: '900px' }}
             >
               <div className="flex items-center justify-between mb-4">
@@ -154,6 +154,7 @@ export default function PriorityCarousel() {
               </div>
             </motion.div>
           </div>
+
         </div>
       </div>
     </section>
