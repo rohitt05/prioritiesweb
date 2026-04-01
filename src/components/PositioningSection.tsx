@@ -8,7 +8,7 @@ import {
   MotionValue,
 } from 'framer-motion'
 
-// ─── Themes per card ─────────────────────────────────────────────────────────
+// ─── Themes per card ──────────────────────────────────────────────────────────
 const THEMES = [
   { bg: '#F5F0E8', cardBg: 'rgba(255,255,255,0.75)', accent: '#83934D', text: '#2C2416', muted: '#7A6E5F', glow: 'rgba(184,200,141,0.40)' },
   { bg: '#FFF0F2', cardBg: 'rgba(255,235,238,0.82)', accent: '#C45C7A', text: '#3A1828', muted: '#8A5868', glow: 'rgba(255,173,173,0.45)' },
@@ -35,20 +35,23 @@ const DECO = [
 
 // ─── Card content data ────────────────────────────────────────────────────────
 const CARDS = [
-  { type: 'intro'    as const, label: "Let's be honest",  heading: 'This app is\nnot for everyone.', sub: "And that's the whole point." },
-  { type: 'notfor'   as const, items: [{ icon: '🌍', line: 'Your follower count' }, { icon: '📢', line: 'The highlight reel' }] },
-  { type: 'notfor'   as const, items: [{ icon: '🔔', line: 'Notifications from strangers' }, { icon: '🤳', line: 'Looking good for the internet' }] },
-  { type: 'notfor'   as const, items: [{ icon: '📈', line: 'Going viral' }, { icon: '👀', line: 'Who viewed your story' }] },
-  { type: 'divider'  as const, text: 'but it is for this.' },
-  { type: 'for'      as const, items: [{ emoji: '🫀', text: 'The 2am text you actually mean' }, { emoji: '📸', text: 'The photo you only send to one person' }] },
-  { type: 'for'      as const, items: [{ emoji: '🎙️', text: 'A voice note that sounds like a hug' }, { emoji: '🗓️', text: 'Every small moment that becomes a memory' }] },
-  { type: 'for'      as const, items: [{ emoji: '🔒', text: 'A space that belongs only to you two' }] },
-  { type: 'manifesto'as const },
+  { type: 'intro'     as const, label: "Let's be honest",  heading: 'This app is\nnot for everyone.', sub: "And that's the whole point." },
+  { type: 'notfor'    as const, items: [{ icon: '🌍', line: 'Your follower count' }, { icon: '📢', line: 'The highlight reel' }] },
+  { type: 'notfor'    as const, items: [{ icon: '🔔', line: 'Notifications from strangers' }, { icon: '🤳', line: 'Looking good for the internet' }] },
+  { type: 'notfor'    as const, items: [{ icon: '📈', line: 'Going viral' }, { icon: '👀', line: 'Who viewed your story' }] },
+  { type: 'divider'   as const, text: 'but it is for this.' },
+  { type: 'for'       as const, items: [{ emoji: '🫀', text: 'The 2am text you actually mean' }, { emoji: '📸', text: 'The photo you only send to one person' }] },
+  { type: 'for'       as const, items: [{ emoji: '🎙️', text: 'A voice note that sounds like a hug' }, { emoji: '🗓️', text: 'Every small moment that becomes a memory' }] },
+  { type: 'for'       as const, items: [{ emoji: '🔒', text: 'A space that belongs only to you two' }] },
+  { type: 'manifesto' as const },
 ]
 
-const N = CARDS.length   // 9
-// Each card occupies 1/N of the scroll range
-// card i is "active" at progress = i/(N-1)
+const N = CARDS.length // 9
+// Each card gets 100vh of scroll distance — feels natural, one scroll per card
+const SCROLL_PER_CARD = 100 // vh
+// Total outer height = sticky panel (100vh) + N cards × 100vh of travel
+// The sticky panel itself takes 100vh, so we only need N extra vh slots
+const TOTAL_HEIGHT = `calc(100vh + ${N * SCROLL_PER_CARD}vh)`
 
 // ─── Card inner content ───────────────────────────────────────────────────────
 function CardContent({ card, theme }: { card: typeof CARDS[0]; theme: typeof THEMES[0] }) {
@@ -170,66 +173,80 @@ function StackCard({
 export default function PositioningSection() {
   const containerRef = useRef<HTMLDivElement>(null)
 
+  // useScroll tracks the full outer container (sticky + scroll distance)
   const { scrollYProgress } = useScroll({
     target:  containerRef,
     offset: ['start start', 'end end'],
   })
 
-  // Smooth spring on raw scroll
-  const sp = useSpring(scrollYProgress, { stiffness: 90, damping: 24, restDelta: 0.0001 })
+  // Smooth spring — moderate stiffness so cards feel weighty but responsive
+  const sp = useSpring(scrollYProgress, { stiffness: 70, damping: 20, restDelta: 0.0001 })
 
-  // ── Pre-compute all transforms here in the parent (rules of hooks ✓) ──
-  // For N cards, card i is "centre stage" when sp = i/(N-1).
-  // It slides in from below, sits, then scales back as next card arrives.
+  // ── How progress maps to cards ──────────────────────────────────────────────
+  // Total scroll = N cards × 100vh  →  sp goes 0 → 1 across that distance
+  // Card i is centred at progress = i / N  (each card owns 1/N of total range)
+  // It arrives over half its slot and leaves over the next half slot
+  const SLOT      = 1 / N           // fraction of total scroll one card occupies
+  const ARRIVE    = SLOT * 0.45     // card rises in during first 45% of its slot
+  const LINGER    = SLOT * 0.30     // card stays fully visible for 30%
+  const DEPART    = SLOT * 0.25     // card fades/scales out over final 25%
 
-  const SLIDE_IN  = 0.55 / (N - 1)   // how much progress to fully arrive
-  const SCALE_OUT = 0.45 / (N - 1)   // how much progress until fully pushed back
+  // helper: clamp to [0,1] so boundary cards don't go negative
+  const cl = (v: number) => Math.max(0, Math.min(1, v))
 
-  // card 0
-  const p0  = 0 / (N - 1)
-  const y0  = useTransform(sp, [p0 - SLIDE_IN, p0], [80, 0])
-  const sc0 = useTransform(sp, [p0, p0 + SCALE_OUT], [1, 0.93])
-  const o0  = useTransform(sp, [p0 - SLIDE_IN, p0, p0 + SCALE_OUT * 2], [0, 1, 0])
+  // Card 0
+  const s0 = 0 * SLOT
+  const y0  = useTransform(sp, [cl(s0),            cl(s0 + ARRIVE)],                       [60, 0])
+  const o0  = useTransform(sp, [cl(s0),            cl(s0 + ARRIVE), cl(s0 + ARRIVE + LINGER), cl(s0 + SLOT)], [0, 1, 1, 0])
+  const sc0 = useTransform(sp, [cl(s0 + ARRIVE + LINGER), cl(s0 + SLOT)],                 [1, 0.94])
 
-  const p1  = 1 / (N - 1)
-  const y1  = useTransform(sp, [p1 - SLIDE_IN, p1], [80, 0])
-  const sc1 = useTransform(sp, [p1, p1 + SCALE_OUT], [1, 0.93])
-  const o1  = useTransform(sp, [p1 - SLIDE_IN, p1, p1 + SCALE_OUT * 2], [0, 1, 0])
+  // Card 1
+  const s1 = 1 * SLOT
+  const y1  = useTransform(sp, [cl(s1),            cl(s1 + ARRIVE)],                       [60, 0])
+  const o1  = useTransform(sp, [cl(s1),            cl(s1 + ARRIVE), cl(s1 + ARRIVE + LINGER), cl(s1 + SLOT)], [0, 1, 1, 0])
+  const sc1 = useTransform(sp, [cl(s1 + ARRIVE + LINGER), cl(s1 + SLOT)],                 [1, 0.94])
 
-  const p2  = 2 / (N - 1)
-  const y2  = useTransform(sp, [p2 - SLIDE_IN, p2], [80, 0])
-  const sc2 = useTransform(sp, [p2, p2 + SCALE_OUT], [1, 0.93])
-  const o2  = useTransform(sp, [p2 - SLIDE_IN, p2, p2 + SCALE_OUT * 2], [0, 1, 0])
+  // Card 2
+  const s2 = 2 * SLOT
+  const y2  = useTransform(sp, [cl(s2),            cl(s2 + ARRIVE)],                       [60, 0])
+  const o2  = useTransform(sp, [cl(s2),            cl(s2 + ARRIVE), cl(s2 + ARRIVE + LINGER), cl(s2 + SLOT)], [0, 1, 1, 0])
+  const sc2 = useTransform(sp, [cl(s2 + ARRIVE + LINGER), cl(s2 + SLOT)],                 [1, 0.94])
 
-  const p3  = 3 / (N - 1)
-  const y3  = useTransform(sp, [p3 - SLIDE_IN, p3], [80, 0])
-  const sc3 = useTransform(sp, [p3, p3 + SCALE_OUT], [1, 0.93])
-  const o3  = useTransform(sp, [p3 - SLIDE_IN, p3, p3 + SCALE_OUT * 2], [0, 1, 0])
+  // Card 3
+  const s3 = 3 * SLOT
+  const y3  = useTransform(sp, [cl(s3),            cl(s3 + ARRIVE)],                       [60, 0])
+  const o3  = useTransform(sp, [cl(s3),            cl(s3 + ARRIVE), cl(s3 + ARRIVE + LINGER), cl(s3 + SLOT)], [0, 1, 1, 0])
+  const sc3 = useTransform(sp, [cl(s3 + ARRIVE + LINGER), cl(s3 + SLOT)],                 [1, 0.94])
 
-  const p4  = 4 / (N - 1)
-  const y4  = useTransform(sp, [p4 - SLIDE_IN, p4], [80, 0])
-  const sc4 = useTransform(sp, [p4, p4 + SCALE_OUT], [1, 0.93])
-  const o4  = useTransform(sp, [p4 - SLIDE_IN, p4, p4 + SCALE_OUT * 2], [0, 1, 0])
+  // Card 4
+  const s4 = 4 * SLOT
+  const y4  = useTransform(sp, [cl(s4),            cl(s4 + ARRIVE)],                       [60, 0])
+  const o4  = useTransform(sp, [cl(s4),            cl(s4 + ARRIVE), cl(s4 + ARRIVE + LINGER), cl(s4 + SLOT)], [0, 1, 1, 0])
+  const sc4 = useTransform(sp, [cl(s4 + ARRIVE + LINGER), cl(s4 + SLOT)],                 [1, 0.94])
 
-  const p5  = 5 / (N - 1)
-  const y5  = useTransform(sp, [p5 - SLIDE_IN, p5], [80, 0])
-  const sc5 = useTransform(sp, [p5, p5 + SCALE_OUT], [1, 0.93])
-  const o5  = useTransform(sp, [p5 - SLIDE_IN, p5, p5 + SCALE_OUT * 2], [0, 1, 0])
+  // Card 5
+  const s5 = 5 * SLOT
+  const y5  = useTransform(sp, [cl(s5),            cl(s5 + ARRIVE)],                       [60, 0])
+  const o5  = useTransform(sp, [cl(s5),            cl(s5 + ARRIVE), cl(s5 + ARRIVE + LINGER), cl(s5 + SLOT)], [0, 1, 1, 0])
+  const sc5 = useTransform(sp, [cl(s5 + ARRIVE + LINGER), cl(s5 + SLOT)],                 [1, 0.94])
 
-  const p6  = 6 / (N - 1)
-  const y6  = useTransform(sp, [p6 - SLIDE_IN, p6], [80, 0])
-  const sc6 = useTransform(sp, [p6, p6 + SCALE_OUT], [1, 0.93])
-  const o6  = useTransform(sp, [p6 - SLIDE_IN, p6, p6 + SCALE_OUT * 2], [0, 1, 0])
+  // Card 6
+  const s6 = 6 * SLOT
+  const y6  = useTransform(sp, [cl(s6),            cl(s6 + ARRIVE)],                       [60, 0])
+  const o6  = useTransform(sp, [cl(s6),            cl(s6 + ARRIVE), cl(s6 + ARRIVE + LINGER), cl(s6 + SLOT)], [0, 1, 1, 0])
+  const sc6 = useTransform(sp, [cl(s6 + ARRIVE + LINGER), cl(s6 + SLOT)],                 [1, 0.94])
 
-  const p7  = 7 / (N - 1)
-  const y7  = useTransform(sp, [p7 - SLIDE_IN, p7], [80, 0])
-  const sc7 = useTransform(sp, [p7, p7 + SCALE_OUT], [1, 0.93])
-  const o7  = useTransform(sp, [p7 - SLIDE_IN, p7, p7 + SCALE_OUT * 2], [0, 1, 0])
+  // Card 7
+  const s7 = 7 * SLOT
+  const y7  = useTransform(sp, [cl(s7),            cl(s7 + ARRIVE)],                       [60, 0])
+  const o7  = useTransform(sp, [cl(s7),            cl(s7 + ARRIVE), cl(s7 + ARRIVE + LINGER), cl(s7 + SLOT)], [0, 1, 1, 0])
+  const sc7 = useTransform(sp, [cl(s7 + ARRIVE + LINGER), cl(s7 + SLOT)],                 [1, 0.94])
 
-  const p8  = 8 / (N - 1)  // = 1
-  const y8  = useTransform(sp, [p8 - SLIDE_IN, p8], [80, 0])
-  const sc8 = useTransform(sp, [p8 - SLIDE_IN, p8], [1, 1])   // last card stays
-  const o8  = useTransform(sp, [p8 - SLIDE_IN, p8], [0, 1])
+  // Card 8 — last card: arrives and STAYS (no fade-out)
+  const s8 = 8 * SLOT
+  const y8  = useTransform(sp, [cl(s8), cl(s8 + ARRIVE)], [60, 0])
+  const o8  = useTransform(sp, [cl(s8), cl(s8 + ARRIVE)], [0, 1])
+  const sc8 = useTransform(sp, [cl(s8), cl(s8 + ARRIVE)], [0.96, 1])
 
   const cards = [
     { yMv: y0, scaleMv: sc0, opacityMv: o0 },
@@ -243,20 +260,35 @@ export default function PositioningSection() {
     { yMv: y8, scaleMv: sc8, opacityMv: o8 },
   ]
 
-  // Dynamic bg per card
-  const bgOpacities = THEMES.map((_, i) => {
-    const mid = i / (N - 1)
-    const half = 0.6 / (N - 1)
-    return useTransform(sp, [Math.max(0, mid - half), mid, Math.min(1, mid + half)], [0, 1, 0])
-  })
+  // ── Background transitions — one useTransform per theme, no hooks-in-loops ──
+  const bg0 = useTransform(sp, [cl(0*SLOT), cl(0*SLOT+SLOT*0.5), cl(0*SLOT+SLOT)], [0, 1, 0])
+  const bg1 = useTransform(sp, [cl(1*SLOT), cl(1*SLOT+SLOT*0.5), cl(1*SLOT+SLOT)], [0, 1, 0])
+  const bg2 = useTransform(sp, [cl(2*SLOT), cl(2*SLOT+SLOT*0.5), cl(2*SLOT+SLOT)], [0, 1, 0])
+  const bg3 = useTransform(sp, [cl(3*SLOT), cl(3*SLOT+SLOT*0.5), cl(3*SLOT+SLOT)], [0, 1, 0])
+  const bg4 = useTransform(sp, [cl(4*SLOT), cl(4*SLOT+SLOT*0.5), cl(4*SLOT+SLOT)], [0, 1, 0])
+  const bg5 = useTransform(sp, [cl(5*SLOT), cl(5*SLOT+SLOT*0.5), cl(5*SLOT+SLOT)], [0, 1, 0])
+  const bg6 = useTransform(sp, [cl(6*SLOT), cl(6*SLOT+SLOT*0.5), cl(6*SLOT+SLOT)], [0, 1, 0])
+  const bg7 = useTransform(sp, [cl(7*SLOT), cl(7*SLOT+SLOT*0.5), cl(7*SLOT+SLOT)], [0, 1, 0])
+  const bg8 = useTransform(sp, [cl(8*SLOT), cl(Math.min(1, 8*SLOT+SLOT*0.5))],     [0, 1])
+  const bgOpacities = [bg0, bg1, bg2, bg3, bg4, bg5, bg6, bg7, bg8]
 
-  // Scroll hint opacity
-  const hintOp = useTransform(sp, [0, 0.06], [1, 0])
+  // Scroll hint fades out quickly once user starts scrolling
+  const hintOp = useTransform(sp, [0, 0.04], [1, 0])
 
   return (
-    // scroll container: 100vh sticky + N cards × 60vh of scroll distance
-    <div ref={containerRef} style={{ height: `calc(100vh + ${(N - 1) * 60}vh)` }}>
-      <div className="sticky top-0 w-full overflow-hidden" style={{ height: '100svh' }}>
+    /*
+     * Outer div creates the scroll distance.
+     * - 100vh  = the sticky panel height (it sits flush at top:0)
+     * - N*100vh = travel distance so each of the N cards gets a full viewport scroll
+     * No overflow:hidden here — sticky only works when ancestors can scroll.
+     */
+    <div ref={containerRef} style={{ height: TOTAL_HEIGHT }}>
+
+      {/* Sticky viewport panel — pinned until outer div scrolls past */}
+      <div
+        className="sticky top-0 w-full overflow-hidden"
+        style={{ height: '100svh' }}
+      >
 
         {/* Dynamic background layers */}
         <div className="absolute inset-0 z-0">
@@ -280,9 +312,9 @@ export default function PositioningSection() {
           ))}
         </div>
 
-        {/* Card stack */}
+        {/* Card stack — centred in the sticky panel */}
         <div className="absolute inset-0 z-[2] flex items-center justify-center">
-          <div className="relative w-full" style={{ height: 300 }}>
+          <div className="relative w-full" style={{ height: 320 }}>
             {CARDS.map((card, i) => (
               <StackCard
                 key={i}
@@ -297,13 +329,41 @@ export default function PositioningSection() {
           </div>
         </div>
 
-        {/* Scroll hint */}
-        <motion.div className="absolute bottom-8 left-0 right-0 flex flex-col items-center gap-2 pointer-events-none z-[5]"
-          style={{ opacity: hintOp }}>
-          <motion.div className="w-5 h-8 rounded-full border-2 flex items-start justify-center pt-1"
-            style={{ borderColor: 'rgba(44,36,22,0.22)' }}>
-            <motion.div className="w-1 h-2 rounded-full" style={{ background: 'rgba(44,36,22,0.35)' }}
-              animate={{ y: [0, 10, 0] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }} />
+        {/* Scroll progress dots */}
+        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-1.5 z-[5] pointer-events-none">
+          {CARDS.map((_, i) => {
+            const dotProgress = i / (N - 1)
+            return (
+              <motion.div
+                key={i}
+                className="rounded-full"
+                style={{
+                  width: 6,
+                  height: 6,
+                  background: 'rgba(44,36,22,0.20)',
+                  scale: useTransform(sp, [Math.max(0, dotProgress - 0.08), dotProgress, Math.min(1, dotProgress + 0.08)], [1, 1.6, 1]),
+                  opacity: useTransform(sp, [Math.max(0, dotProgress - 0.1), dotProgress, Math.min(1, dotProgress + 0.1)], [0.25, 1, 0.25]),
+                }}
+              />
+            )
+          })}
+        </div>
+
+        {/* Scroll hint — visible only at the very start */}
+        <motion.div
+          className="absolute bottom-14 left-0 right-0 flex flex-col items-center gap-2 pointer-events-none z-[5]"
+          style={{ opacity: hintOp }}
+        >
+          <motion.div
+            className="w-5 h-8 rounded-full border-2 flex items-start justify-center pt-1"
+            style={{ borderColor: 'rgba(44,36,22,0.22)' }}
+          >
+            <motion.div
+              className="w-1 h-2 rounded-full"
+              style={{ background: 'rgba(44,36,22,0.35)' }}
+              animate={{ y: [0, 10, 0] }}
+              transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+            />
           </motion.div>
           <span className="text-[10px] tracking-widest uppercase" style={{ color: 'rgba(44,36,22,0.30)' }}>scroll</span>
         </motion.div>
