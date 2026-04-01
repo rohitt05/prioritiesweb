@@ -28,7 +28,6 @@ const FRIENDS_BASE = [
 ]
 const YOU_BASE = { faceIdx: 6, label: 'you', r: 74 }
 
-// ─── Deco Bubbles ──────────────────────────────────────────────
 const BUBBLE_COLORS = [
   'rgba(193,123,107,0.13)',
   'rgba(212,163,115,0.10)',
@@ -43,7 +42,6 @@ const BUBBLE_COLORS = [
 ]
 
 const BUBBLES = Array.from({ length: 42 }, (_, i) => {
-  // Seeded pseudo-random using index so it's stable across renders
   const seed = (i * 137.508 + 42) % 100
   const seed2 = (i * 73.21 + 11) % 100
   const seed3 = (i * 29.87 + 7)  % 100
@@ -51,15 +49,15 @@ const BUBBLES = Array.from({ length: 42 }, (_, i) => {
   const seed5 = (i * 17.63 + 3)  % 100
   return {
     id: i,
-    size:     6  + (seed  / 100) * 74,           // 6px – 80px
-    left:     (seed2 / 100) * 100,               // 0% – 100%
-    bottom:   -10 + (seed3 / 100) * 60,          // starts near bottom half
-    duration: 14 + (seed4 / 100) * 28,           // 14s – 42s
-    delay:    -(seed5 / 100) * 30,               // already in progress
-    drift:    -30 + (seed  / 100) * 60,          // horizontal drift px
+    size:     6  + (seed  / 100) * 74,
+    left:     (seed2 / 100) * 100,
+    bottom:   -10 + (seed3 / 100) * 60,
+    duration: 14 + (seed4 / 100) * 28,
+    delay:    -(seed5 / 100) * 30,
+    drift:    -30 + (seed  / 100) * 60,
     color:    BUBBLE_COLORS[i % BUBBLE_COLORS.length],
-    blur:     (seed2 / 100) * 3,                 // 0 – 3px blur
-    border:   i % 3 === 0,                       // 1/3 get a thin ring instead of fill
+    blur:     (seed2 / 100) * 3,
+    border:   i % 3 === 0,
   }
 })
 
@@ -98,7 +96,6 @@ function DecoBubbles() {
     </>
   )
 }
-// ───────────────────────────────────────────────────────────────
 
 function PhysicsStage({ trigger, width, height }: { trigger: boolean; width: number; height: number }) {
   const canvasRef   = useRef<HTMLCanvasElement>(null)
@@ -273,12 +270,10 @@ function AnimatedBlock({ inView }: { inView: boolean }) {
         overflow: 'hidden',
       }}
     >
-      {/* z:0 — decorative floating bubbles in background */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden', pointerEvents: 'none' }}>
         <DecoBubbles />
       </div>
 
-      {/* z:1 — text overlay */}
       <div
         style={{
           position: 'absolute',
@@ -320,7 +315,6 @@ function AnimatedBlock({ inView }: { inView: boolean }) {
         </p>
       </div>
 
-      {/* z:2 — physics canvas on top */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
         <PhysicsStage trigger={inView} width={dims.width} height={dims.height} />
       </div>
@@ -382,7 +376,7 @@ export default function Footer() {
             built with love, <span style={{ color: '#6B4035' }}>for love —</span> by your lover 🌸
           </p>
           <p className="text-xs text-[#2E2C29]">
-            © {year} Priorities. All rights reserved. Made with 🌸 in India.
+            © {year} Priorities. All rights reserved. Made with ❤️ in India.
           </p>
         </div>
       </div>
