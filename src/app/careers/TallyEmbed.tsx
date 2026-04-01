@@ -2,7 +2,15 @@
 
 export default function TallyEmbed() {
   return (
-    <div style={{ width: '100%', minHeight: '700px' }}>
+    <div
+      style={{
+        width: '100%',
+        maxWidth: '640px',
+        margin: '0 auto',
+        padding: '48px 24px 0',
+        minHeight: '700px',
+      }}
+    >
       <iframe
         src="https://tally.so/embed/MeYzLp?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1"
         width="100%"
