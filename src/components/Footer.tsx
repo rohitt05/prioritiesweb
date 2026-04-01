@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { motion, useInView } from 'framer-motion'
+import { useInView } from 'framer-motion'
 import { useRef, useState, useEffect } from 'react'
 
 const FACE_SVGS = [
@@ -28,25 +28,21 @@ const FRIENDS_DATA = [
 const YOU_DATA = { faceIdx: 6, label: 'you', r: 70 }
 const ALL_DATA = [...FRIENDS_DATA, YOU_DATA]
 
-const TEXT_H  = 280
-const LAND_H  = 340
-const TOTAL_H = TEXT_H + LAND_H
+const CANVAS_H = 380
 
 function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
   const canvasRef  = useRef<HTMLCanvasElement>(null)
   const startedRef = useRef(false)
   const rafRef     = useRef<number>(0)
-  const wrapRef    = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!trigger || startedRef.current || width === 0) return
     startedRef.current = true
 
     const canvas = canvasRef.current
-    const wrap   = wrapRef.current
-    if (!canvas || !wrap) return
+    if (!canvas) return
     canvas.width  = width
-    canvas.height = TOTAL_H
+    canvas.height = CANVAS_H
 
     const imgs: HTMLImageElement[] = []
     FACE_SVGS.forEach((svg, i) => {
@@ -61,9 +57,9 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
 
       const wo = { isStatic: true, render: { visible: false }, friction: 0.4, restitution: 0.2 }
       Composite.add(engine.world, [
-        Bodies.rectangle(width / 2, TOTAL_H + 25, width + 200, 50,        wo),
-        Bodies.rectangle(-25,        TOTAL_H / 2,  50,          TOTAL_H * 3, wo),
-        Bodies.rectangle(width + 25, TOTAL_H / 2,  50,          TOTAL_H * 3, wo),
+        Bodies.rectangle(width / 2, CANVAS_H + 25, width + 200, 50,         wo),
+        Bodies.rectangle(-25,        CANVAS_H / 2,  50,          CANVAS_H * 3, wo),
+        Bodies.rectangle(width + 25, CANVAS_H / 2,  50,          CANVAS_H * 3, wo),
       ])
 
       const bodies = ALL_DATA.map((d, i) => {
@@ -71,7 +67,7 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
         const xPos  = isYou
           ? width / 2
           : d.r + (i / (FRIENDS_DATA.length - 1)) * (width - d.r * 2)
-        const startY = -(i * 140 + d.r + 300)
+        const startY = -(i * 140 + d.r + 200)
         const body = Bodies.circle(xPos, startY, d.r, {
           restitution: 0.28, friction: 0.5, frictionAir: 0.008, density: 0.004,
           render: { visible: false },
@@ -84,9 +80,7 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
       })
       Composite.add(engine.world, bodies)
 
-      // Matter mouse — attach directly to canvas so drag works
       const mouse = Mouse.create(canvas)
-      // Neutralise Matter's built-in wheel handler so it never blocks page scroll
       ;(mouse as any).element.removeEventListener('wheel', (mouse as any).mousewheel)
       const mc = MouseConstraint.create(engine, {
         mouse,
@@ -94,16 +88,14 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
       })
       Composite.add(engine.world, mc)
 
-      // Make sure native wheel always scrolls the page (passive, no block)
-      const onWheel = () => { /* noop — passive listener just stops Matter eating wheel */ }
-      canvas.addEventListener('wheel', onWheel, { passive: true })
+      canvas.addEventListener('wheel', () => {}, { passive: true })
 
       Runner.run(Runner.create(), engine)
 
       const ctx = canvas.getContext('2d')!
       function draw() {
         rafRef.current = requestAnimationFrame(draw)
-        ctx.clearRect(0, 0, width, TOTAL_H)
+        ctx.clearRect(0, 0, width, CANVAS_H)
         Composite.allBodies(engine.world).forEach((body: any) => {
           if (body.isStatic) return
           const { x, y } = body.position
@@ -143,29 +135,19 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
       }
       draw()
 
-      return () => {
-        cancelAnimationFrame(rafRef.current)
-        canvas.removeEventListener('wheel', onWheel)
-      }
+      return () => { cancelAnimationFrame(rafRef.current) }
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trigger, width])
 
   return (
-    <div ref={wrapRef} style={{ position: 'absolute', inset: 0 }}>
-      <canvas
-        ref={canvasRef}
-        style={{
-          display: 'block', width: '100%', height: TOTAL_H,
-          background: 'transparent',
-          // pointer-events ON so Matter Mouse can receive mousedown for dragging
-          pointerEvents: 'auto',
-          cursor: 'grab',
-          // sit behind the text overlay
-          position: 'relative', zIndex: 1,
-        }}
-      />
-    </div>
+    <canvas
+      ref={canvasRef}
+      style={{
+        display: 'block', width: '100%', height: CANVAS_H,
+        background: 'transparent', cursor: 'grab',
+      }}
+    />
   )
 }
 
@@ -184,62 +166,9 @@ function AnimatedBlock({ inView }: { inView: boolean }) {
   return (
     <div
       ref={blockRef}
-      style={{ position: 'relative', width: '100%', height: TOTAL_H, background: '#0e0d0b', overflow: 'hidden' }}
+      style={{ width: '100%', height: CANVAS_H, background: '#0e0d0b', overflow: 'hidden' }}
     >
       <PhysicsStage trigger={inView} width={width} />
-
-      {/* text — pointer-events:none so clicks fall through to canvas for dragging */}
-      <div
-        className="absolute top-0 left-0 right-0 text-center px-5 sm:px-8"
-        style={{ zIndex: 10, paddingTop: 44, pointerEvents: 'none' }}
-      >
-        <motion.p
-          initial={{ opacity: 0, y: 14 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.05, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="text-[#3A3630] text-[11px] tracking-[0.22em] uppercase font-semibold mb-5"
-        >
-          me and my 9 idiots
-        </motion.p>
-
-        <motion.h2
-          initial={{ opacity: 0, y: 40 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.14, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-          style={{
-            fontFamily: 'Georgia,"Times New Roman",serif',
-            fontStyle: 'italic', fontWeight: 700,
-            fontSize: 'clamp(44px, 7.5vw, 90px)',
-            lineHeight: 1.0, color: '#F5F0E8',
-            marginBottom: '0.22em', letterSpacing: '-0.02em',
-          }}
-        >
-          built with love,<br />
-          <span style={{ color: '#C17B6B' }}>for love —</span>
-        </motion.h2>
-
-        <motion.p
-          initial={{ opacity: 0, y: 18 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.3, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          style={{
-            fontFamily: 'Georgia,serif', fontStyle: 'italic',
-            fontSize: 'clamp(16px, 2.2vw, 24px)',
-            color: '#4E4944', marginBottom: '0.8rem', fontWeight: 400,
-          }}
-        >
-          by your lover 🌸
-        </motion.p>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={inView ? { opacity: 1 } : {}}
-          transition={{ delay: 0.65, duration: 0.5 }}
-          className="text-[#2A2724] text-[10px] tracking-[0.18em] uppercase"
-        >
-          grab &amp; drag them around
-        </motion.p>
-      </div>
     </div>
   )
 }
@@ -303,7 +232,7 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* physics block — no border, no extra space */}
+      {/* physics — pure canvas, no text */}
       <AnimatedBlock inView={inView} />
 
     </footer>
