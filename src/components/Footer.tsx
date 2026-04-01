@@ -20,7 +20,6 @@ const FACES = [
   (s: number, k: string) => (<svg key={k} width={s} height={s} viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#E8D5C4"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#4A2912"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#4A2912"/><ellipse cx="32" cy="19" rx="13" ry="8" fill="#1C0A00"/><circle cx="26" cy="30" r="1.3" fill="#1C0A00"/><circle cx="38" cy="30" r="1.3" fill="#1C0A00"/><path d="M28 37 Q32 39 36 37" stroke="#6B3A2A" strokeWidth="1.5" strokeLinecap="round" fill="none"/></svg>),
 ]
 
-// ─── YouAvatar — same as AudienceSection ──────────────────────────────────────
 function YouAvatar({ size }: { size: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
@@ -37,8 +36,6 @@ function YouAvatar({ size }: { size: number }) {
   )
 }
 
-// ─── 9 friend avatars: varied sizes, all within 8%–92% to stay on screen ──────
-// sizes range 80–140px to feel big + overlapping. zIndex controls layering.
 const FRIENDS = [
   { id: 1, faceIdx: 0, label: 'the creative one', size: 110, leftPct: 4,  delay: 0.06, z: 3 },
   { id: 2, faceIdx: 1, label: 'the fun one',       size: 130, leftPct: 14, delay: 0.20, z: 5 },
@@ -52,47 +49,36 @@ const FRIENDS = [
 ]
 
 // ─── Single draggable friend avatar ──────────────────────────────────────────
+// dragConstraints passed in as a ref from the parent stage — no useEffect needed
 function FriendAvatar({
-  faceIdx, label, size, leftPct, delay, z,
-}: typeof FRIENDS[0]) {
-  const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '0px 0px -20px 0px' })
+  faceIdx, label, size, leftPct, delay, z, stageRef,
+}: typeof FRIENDS[0] & { stageRef: React.RefObject<HTMLDivElement> }) {
   const [landed, setLanded] = useState(false)
   const [dragging, setDragging] = useState(false)
-  const [constraintRef, setConstraintRef] = useState<HTMLElement | null>(null)
-
-  // grab the parent container for drag constraints
-  useEffect(() => {
-    if (ref.current) {
-      const el = (ref.current as HTMLElement).closest('.avatar-stage') as HTMLElement | null
-      if (el) setConstraintRef(el)
-    }
-  }, [])
 
   return (
     <motion.div
-      ref={ref}
       drag={landed}
-      dragElastic={0.12}
+      dragElastic={0.1}
       dragMomentum
-      dragConstraints={constraintRef ?? undefined}
+      dragConstraints={stageRef}
       whileDrag={{ scale: 1.15, zIndex: 60, cursor: 'grabbing' }}
       onDragStart={() => setDragging(true)}
       onDragEnd={() => setDragging(false)}
-      initial={{ y: -260, opacity: 0, scale: 0.65 }}
-      animate={inView ? {
+      initial={{ y: -300, opacity: 0, scale: 0.6 }}
+      animate={{
         y: 0,
         opacity: 1,
         scale: 1,
         transition: {
           delay,
-          duration: 0.8,
+          duration: 0.85,
           type: 'spring',
-          stiffness: 120,
+          stiffness: 110,
           damping: 12,
           onComplete: () => setLanded(true),
         },
-      } : {}}
+      }}
       whileHover={landed && !dragging ? {
         y: -12,
         scale: 1.07,
@@ -113,7 +99,7 @@ function FriendAvatar({
         style={{
           width: size,
           height: size,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.40)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
           border: '2px solid rgba(255,255,255,0.06)',
         }}
       >
@@ -134,7 +120,7 @@ function FriendAvatar({
   )
 }
 
-// ─── My static avatar — center, never moves ───────────────────────────────────
+// ─── My static center avatar ─────────────────────────────────────────────────
 function MyAvatar() {
   const size = 136
   return (
@@ -142,14 +128,11 @@ function MyAvatar() {
       className="absolute flex flex-col items-center gap-1 select-none"
       style={{ left: `calc(50% - ${size / 2}px)`, bottom: 0, zIndex: 20 }}
     >
-      {/* pulse glow */}
       <motion.div
         className="absolute rounded-full"
         style={{
-          width: size + 48,
-          height: size + 48,
-          top: -24,
-          left: -24,
+          width: size + 48, height: size + 48,
+          top: -24, left: -24,
           background: 'radial-gradient(circle, rgba(193,123,107,0.38) 0%, transparent 68%)',
           pointerEvents: 'none',
         }}
@@ -159,8 +142,7 @@ function MyAvatar() {
       <div
         className="rounded-full overflow-hidden relative"
         style={{
-          width: size,
-          height: size,
+          width: size, height: size,
           border: '3px solid #D4A373',
           boxShadow: '0 8px 40px rgba(212,163,115,0.45), 0 2px 8px rgba(0,0,0,0.30)',
         }}
@@ -170,6 +152,31 @@ function MyAvatar() {
       <span style={{ fontSize: 11, color: '#C17B6B', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
         you
       </span>
+    </div>
+  )
+}
+
+// ─── Avatar stage — only mounts client-side to avoid hydration mismatch ───────
+function AvatarStage() {
+  const stageRef = useRef<HTMLDivElement>(null)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
+
+  return (
+    <div
+      ref={stageRef}
+      className="relative w-full"
+      style={{ height: 200, overflow: 'hidden' }}
+    >
+      {mounted && (
+        <>
+          <MyAvatar />
+          {FRIENDS.map(a => (
+            <FriendAvatar key={a.id} {...a} stageRef={stageRef} />
+          ))}
+        </>
+      )}
     </div>
   )
 }
@@ -186,16 +193,10 @@ export default function Footer() {
       {/* ── Links + brand grid ── */}
       <div className="max-w-5xl mx-auto px-5 sm:px-8 pt-16 pb-14">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-10">
-
-          {/* Brand col */}
           <div className="max-w-[200px]">
             <span className="font-serif italic text-[26px] font-bold text-[#F5F0E8] block mb-2">priorities</span>
-            <p className="text-xs leading-relaxed text-[#4A4540]">
-              9 people. Real moments. No noise.
-            </p>
+            <p className="text-xs leading-relaxed text-[#4A4540]">9 people. Real moments. No noise.</p>
           </div>
-
-          {/* Link columns */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 text-sm">
             <div>
               <p className="text-[#F5F0E8] font-semibold mb-4 text-xs tracking-widest uppercase">Product</p>
@@ -238,13 +239,12 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* ── ANIMATED SECTION — full width, below everything ── */}
+      {/* ── ANIMATED SECTION ── */}
       <div
         ref={sectionRef}
         className="relative w-full border-t border-[#1E1C18]"
         style={{ background: 'linear-gradient(to top, #0A0908 0%, #100F0D 100%)' }}
       >
-        {/* Tagline */}
         <div className="max-w-5xl mx-auto px-5 sm:px-8 pt-20 pb-8 text-center">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -254,18 +254,15 @@ export default function Footer() {
           >
             me and my 9 idiots
           </motion.p>
-
           <motion.h2
             initial={{ opacity: 0, y: 30 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 0.32, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             className="font-serif italic text-[36px] sm:text-[52px] md:text-[64px] font-bold text-[#F5F0E8] leading-[1.05] mb-3"
           >
-            built with love,
-            <br />
+            built with love,<br />
             <span className="text-[#C17B6B]">for love —</span>
           </motion.h2>
-
           <motion.p
             initial={{ opacity: 0, y: 16 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -274,7 +271,6 @@ export default function Footer() {
           >
             by your lover 🌸
           </motion.p>
-
           <motion.p
             initial={{ opacity: 0 }}
             animate={inView ? { opacity: 1 } : {}}
@@ -285,28 +281,10 @@ export default function Footer() {
           </motion.p>
         </div>
 
-        {/* Avatar stage — clipped so nothing escapes horizontally */}
-        <div
-          className="avatar-stage relative w-full"
-          style={{
-            height: 200,
-            overflow: 'hidden',
-          }}
-        >
-          {/* My avatar — static center, never falls */}
-          <MyAvatar />
+        {/* Avatar stage — client-only, no hydration issues */}
+        <AvatarStage />
 
-          {/* 9 falling friends */}
-          {FRIENDS.map(a => (
-            <FriendAvatar key={a.id} {...a} />
-          ))}
-        </div>
-
-        {/* Ground fade */}
-        <div
-          className="h-16 w-full"
-          style={{ background: 'linear-gradient(to top, #0A0908 50%, transparent 100%)' }}
-        />
+        <div className="h-16 w-full" style={{ background: 'linear-gradient(to top, #0A0908 50%, transparent 100%)' }} />
       </div>
 
     </footer>
