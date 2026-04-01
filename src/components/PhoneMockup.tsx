@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { motion, useScroll, useTransform, useSpring, useInView, AnimatePresence } from 'framer-motion'
-import { Heart, Mic, Camera, Phone, MoreHorizontal } from 'lucide-react'
+import { Heart, Mic, Camera, Phone, MoreHorizontal, Video } from 'lucide-react'
 
 const homeContacts = [
   { name: 'Jaanu', sub: 'Priority #1', emoji: '💑', active: true, color: '#FAD1D8' },
@@ -112,24 +112,28 @@ export default function PhoneMockup() {
                 </div>
               </div>
 
-              {/* Tabs */}
-              <div className="flex items-center px-5 mb-4 gap-1">
+              {/* Tabs — z-index and pointer-events explicitly set */}
+              <div className="relative flex items-center px-5 mb-4 gap-1" style={{ zIndex: 20 }}>
                 {(['home', 'timeline'] as const).map((tab) => (
                   <button
                     key={tab}
+                    type="button"
                     onClick={() => setActiveTab(tab)}
-                    className="relative flex-1 py-1.5 text-[11px] font-medium tracking-wide transition-colors duration-200"
-                    style={{ color: activeTab === tab ? '#2C2720' : '#A89F8D' }}
+                    className="relative flex-1 py-2 text-[11px] font-medium tracking-wide cursor-pointer select-none"
+                    style={{
+                      color: activeTab === tab ? '#2C2720' : '#A89F8D',
+                      WebkitTapHighlightColor: 'transparent',
+                      zIndex: 20,
+                      pointerEvents: 'auto',
+                    }}
                   >
                     {tab}
                     {activeTab === tab && (
                       <motion.div
-                        layoutId="tab-indicator"
+                        layoutId="phone-tab-indicator"
                         className="absolute bottom-0 left-1/2 -translate-x-1/2"
                         style={{ width: 28, height: 3, borderRadius: 999 }}
-                        animate={{
-                          background: ['#D4A373', '#FAD1D8', '#D4A373']
-                        }}
+                        animate={{ background: ['#D4A373', '#FAD1D8', '#D4A373'] }}
                         transition={{ background: { duration: 3, repeat: Infinity } }}
                       />
                     )}
@@ -148,7 +152,7 @@ export default function PhoneMockup() {
                       exit={{ opacity: 0, x: 20 }}
                       transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
                     >
-                      {/* Name + large circle */}
+                      {/* Name */}
                       <div className="text-center mb-3">
                         <div className="relative inline-block">
                           <span className="font-serif font-bold text-[22px] text-[#2C2720] opacity-15 absolute -top-1 left-0 right-0 text-center select-none">Jaanu</span>
@@ -171,7 +175,7 @@ export default function PhoneMockup() {
                       {/* Action buttons */}
                       <div className="flex gap-2 justify-center mb-4">
                         <div className="flex items-center gap-3 px-5 py-2.5 rounded-full bg-white/70 shadow-sm">
-                          <Camera size={14} className="text-[#5C5347]" />
+                          <Video size={14} className="text-[#5C5347]" />
                           <Phone size={14} className="text-[#5C5347]" />
                         </div>
                       </div>

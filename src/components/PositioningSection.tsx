@@ -103,40 +103,38 @@ export default function PositioningSection() {
           <div className="flex-1 h-px bg-white/10" />
         </motion.div>
 
-        {/* ── FOR lines ── */}
-        <div className="flex flex-col gap-4 sm:gap-5 mb-12 sm:mb-16">
+        {/* ── FOR lines — CENTERED ── */}
+        <div className="flex flex-col items-center gap-4 sm:gap-5 mb-12 sm:mb-16">
           {forLines.map((line, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, x: -36, filter: 'blur(4px)' }}
-              animate={inView ? { opacity: 1, x: 0, filter: 'blur(0px)' } : {}}
+              initial={{ opacity: 0, y: 24, filter: 'blur(4px)' }}
+              animate={inView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
               transition={{ delay: 0.65 + i * 0.1, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="flex items-center gap-3 sm:gap-4 group"
+              className="flex items-center gap-3 sm:gap-4 group justify-center"
             >
               <motion.span
-                className="text-xl sm:text-2xl w-8 sm:w-10 flex-shrink-0 text-center"
+                className="text-xl sm:text-2xl flex-shrink-0"
                 animate={{ rotate: [0, 6, -6, 0] }}
                 transition={{ delay: i * 1.2, duration: 6, repeat: Infinity, ease: 'easeInOut' }}
               >{line.emoji}</motion.span>
-              <span className="text-[15px] sm:text-[18px] font-serif italic text-[#FDFCF0] leading-snug group-hover:text-[#D4A373] transition-colors duration-300">
+              <span className="text-[15px] sm:text-[18px] font-serif italic text-[#FDFCF0] leading-snug group-hover:text-[#D4A373] transition-colors duration-300 text-center">
                 {line.text}
               </span>
             </motion.div>
           ))}
         </div>
 
-        {/* ── Manifesto card — centered, beautiful ── */}
+        {/* ── Manifesto card ── */}
         <motion.div
           initial={{ opacity: 0, y: 36, filter: 'blur(8px)' }}
           animate={inView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
           transition={{ delay: 1.1, duration: 1, ease: [0.16, 1, 0.3, 1] }}
           className="rounded-2xl sm:rounded-3xl bg-white/[0.04] border border-white/[0.09] px-6 sm:px-12 py-10 sm:py-14"
         >
-          {/* Opening quote mark */}
           <div className="text-center mb-4">
             <span className="font-serif text-[64px] text-[#D4A373] leading-none select-none" style={{ lineHeight: 0.6, opacity: 0.5 }}>&ldquo;</span>
           </div>
-
           <p className="font-serif text-center text-[clamp(18px,3.5vw,28px)] text-[#FDFCF0] leading-[1.5] tracking-tight">
             The world has a million apps
             <br />
@@ -146,12 +144,9 @@ export default function PositioningSection() {
             <br />
             for{' '}<em className="text-[#D4A373] font-bold">the one.</em>
           </p>
-
-          {/* Closing quote + attribution */}
           <div className="text-center mt-6">
             <span className="font-serif text-[64px] text-[#D4A373] leading-none select-none" style={{ lineHeight: 0.6, opacity: 0.5 }}>&rdquo;</span>
           </div>
-
           <div className="mt-6 flex items-center justify-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-[#D4A373] animate-pulse" />
             <span className="text-[10px] sm:text-[11px] tracking-[0.16em] uppercase text-[#7C7267]">Priorities · 2026</span>
