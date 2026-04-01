@@ -53,7 +53,7 @@ export default function PositioningSection() {
           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-10 sm:mb-14"
         >
-          <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#7C7267] block mb-4">Let’s be honest</span>
+          <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#7C7267] block mb-4">Let&apos;s be honest</span>
           <h2 className="font-serif text-[clamp(32px,6vw,68px)] font-bold text-[#FDFCF0] leading-[0.92] tracking-tight">
             This app is<br />
             <em className="text-[#D4A373]">not for everyone.</em>
@@ -64,11 +64,11 @@ export default function PositioningSection() {
             transition={{ delay: 0.3, duration: 0.8 }}
             className="mt-4 text-[14px] sm:text-[16px] text-[#7C7267] leading-relaxed"
           >
-            And that’s the whole point.
+            And that&apos;s the whole point.
           </motion.p>
         </motion.div>
 
-        {/* ── NOT for pills — wrapping grid ── */}
+        {/* ── NOT for pills ── */}
         <motion.div
           className="flex flex-wrap gap-2 sm:gap-3 justify-center mb-10 sm:mb-14"
           initial={{ opacity: 0, y: 20 }}
@@ -125,22 +125,33 @@ export default function PositioningSection() {
           ))}
         </div>
 
-        {/* ── Manifesto card ── */}
+        {/* ── Manifesto card — centered, beautiful ── */}
         <motion.div
           initial={{ opacity: 0, y: 36, filter: 'blur(8px)' }}
           animate={inView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
           transition={{ delay: 1.1, duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="rounded-2xl sm:rounded-3xl bg-white/[0.04] border border-white/[0.09] px-6 sm:px-10 py-8 sm:py-10 text-center"
+          className="rounded-2xl sm:rounded-3xl bg-white/[0.04] border border-white/[0.09] px-6 sm:px-12 py-10 sm:py-14"
         >
-          <p className="font-serif italic text-[clamp(17px,3.2vw,32px)] text-[#FDFCF0] leading-[1.35]">
-            &ldquo;The world has a million apps
+          {/* Opening quote mark */}
+          <div className="text-center mb-4">
+            <span className="font-serif text-[64px] text-[#D4A373] leading-none select-none" style={{ lineHeight: 0.6, opacity: 0.5 }}>&ldquo;</span>
+          </div>
+
+          <p className="font-serif text-center text-[clamp(18px,3.5vw,28px)] text-[#FDFCF0] leading-[1.5] tracking-tight">
+            The world has a million apps
             <br />
-            <span className="text-[#D4A373]">for everyone.</span>
+            <em className="text-[#D4A373] not-italic">for everyone.</em>
             <br />
-            We made one
+            <span className="opacity-70">We made one</span>
             <br />
-            for <span className="text-[#D4A373]">the one.&rdquo;</span>
+            for{' '}<em className="text-[#D4A373] font-bold">the one.</em>
           </p>
+
+          {/* Closing quote + attribution */}
+          <div className="text-center mt-6">
+            <span className="font-serif text-[64px] text-[#D4A373] leading-none select-none" style={{ lineHeight: 0.6, opacity: 0.5 }}>&rdquo;</span>
+          </div>
+
           <div className="mt-6 flex items-center justify-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-[#D4A373] animate-pulse" />
             <span className="text-[10px] sm:text-[11px] tracking-[0.16em] uppercase text-[#7C7267]">Priorities · 2026</span>

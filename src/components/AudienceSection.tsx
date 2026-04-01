@@ -1,12 +1,38 @@
 'use client'
-import { useRef } from 'react'
-import { motion, useInView } from 'framer-motion'
+import { useRef, useEffect, useRef as useAnimRef } from 'react'
+import { motion, useInView, useAnimationFrame } from 'framer-motion'
 
-const cards = [
-  { emoji: '💑', title: 'Couples',         sub: 'Especially long-distance', color: '#FAD1D8', desc: 'Share your day, your voice, your moments — without the noise of social media.' },
-  { emoji: '✨', title: 'Best Friends',    sub: 'Your ride-or-dies',        color: '#DBC0E7', desc: 'A private space just for you two. The friendship that matters most.' },
-  { emoji: '🏠', title: 'Trusted Circles', sub: 'Close-knit groups',        color: '#C9E6EE', desc: 'For small groups who want something more intentional than a group chat.' },
+const CENTER = { emoji: '🫵', label: 'You', color: '#FDFCF0', ring: true }
+
+const RING1 = [
+  { emoji: '💑', label: 'Jaanu', color: '#FAD1D8', angle: 270, dist: 108, size: 64 },
 ]
+
+const RING2 = [
+  { emoji: '👯', label: 'Bestie', color: '#DBC0E7', angle: 40, dist: 170, size: 54 },
+  { emoji: '🤝', label: 'BFF',    color: '#C9E6EE', angle: 140, dist: 165, size: 50 },
+]
+
+const RING3 = [
+  { emoji: '🏠', label: 'Fam',      color: '#D4E6D0', angle: 200, dist: 220, size: 44 },
+  { emoji: '🎮', label: 'Homie',    color: '#F0E6C8', angle: 310, dist: 215, size: 40 },
+  { emoji: '☕', label: 'Colleague', color: '#E8D5C4', angle: 70,  dist: 218, size: 38 },
+]
+
+const FADED = [
+  { angle: 15,  dist: 270, size: 30, opacity: 0.18 },
+  { angle: 100, dist: 260, size: 26, opacity: 0.12 },
+  { angle: 175, dist: 275, size: 28, opacity: 0.15 },
+  { angle: 245, dist: 265, size: 24, opacity: 0.10 },
+  { angle: 330, dist: 272, size: 26, opacity: 0.13 },
+  { angle: 55,  dist: 290, size: 22, opacity: 0.09 },
+  { angle: 155, dist: 285, size: 20, opacity: 0.08 },
+]
+
+function toXY(angleDeg: number, dist: number) {
+  const rad = (angleDeg - 90) * (Math.PI / 180)
+  return { x: Math.cos(rad) * dist, y: Math.sin(rad) * dist }
+}
 
 export default function AudienceSection() {
   const ref    = useRef(null)
@@ -27,6 +53,7 @@ export default function AudienceSection() {
       </motion.div>
 
       <div className="max-w-5xl mx-auto relative z-10">
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -41,32 +68,166 @@ export default function AudienceSection() {
           </h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 sm:gap-6">
-          {cards.map((c, i) => (
-            <motion.div
-              key={i}
-              className="card p-6 sm:p-8 flex flex-col gap-4"
-              initial={{ opacity: 0, y: 60, rotate: i === 0 ? -3 : i === 1 ? 0 : 3, scale: 0.93 }}
-              animate={inView ? { opacity: 1, y: 0, rotate: 0, scale: 1 } : {}}
-              transition={{ delay: i * 0.15, duration: 1, ease: [0.16, 1, 0.3, 1] }}
-              whileHover={{ y: -10, scale: 1.03, rotate: i === 0 ? -1 : i === 2 ? 1 : 0, transition: { duration: 0.25 } }}
-            >
-              <motion.div
-                className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl flex items-center justify-center text-3xl sm:text-4xl"
-                style={{ background: c.color }}
-                animate={{ rotate: [0, 5, -5, 0] }}
-                transition={{ delay: i * 0.8, duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-              >
-                {c.emoji}
-              </motion.div>
-              <div>
-                <div className="font-serif italic font-bold text-[20px] sm:text-[22px] text-[#2C2720]">{c.title}</div>
-                <div className="text-[11px] sm:text-[12px] text-[#A89F8D] mt-0.5 label-tag">{c.sub}</div>
-              </div>
-              <p className="text-[13px] sm:text-[14px] text-[#7C7267] leading-relaxed">{c.desc}</p>
-            </motion.div>
+        {/* Orbital constellation */}
+        <motion.div
+          className="relative mx-auto flex items-center justify-center"
+          style={{ width: 620, height: 620, maxWidth: '100%' }}
+          initial={{ opacity: 0, scale: 0.88 }}
+          animate={inView ? { opacity: 1, scale: 1 } : {}}
+          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+        >
+          {/* Orbit rings (decorative) */}
+          {[108, 168, 220].map((r, i) => (
+            <div key={i} className="absolute rounded-full border border-dashed"
+              style={{
+                width: r * 2,
+                height: r * 2,
+                borderColor: `rgba(44,39,32,${0.06 - i * 0.015})`,
+              }}
+            />
           ))}
-        </div>
+
+          {/* Faded crowd */}
+          {FADED.map((a, i) => {
+            const { x, y } = toXY(a.angle, a.dist)
+            return (
+              <motion.div key={i}
+                className="absolute rounded-full bg-[#C4B9A8]"
+                style={{
+                  width: a.size, height: a.size,
+                  left: `calc(50% + ${x}px - ${a.size / 2}px)`,
+                  top:  `calc(50% + ${y}px - ${a.size / 2}px)`,
+                  opacity: a.opacity,
+                  filter: 'blur(2px)',
+                }}
+                animate={{ opacity: [a.opacity, a.opacity * 1.6, a.opacity], scale: [1, 1.05, 1] }}
+                transition={{ delay: i * 0.4, duration: 5 + i, repeat: Infinity, ease: 'easeInOut' }}
+              />
+            )
+          })}
+
+          {/* Ring 3 */}
+          {RING3.map((a, i) => {
+            const { x, y } = toXY(a.angle, a.dist)
+            return (
+              <motion.div key={i}
+                className="absolute flex flex-col items-center gap-1"
+                style={{
+                  left: `calc(50% + ${x}px - ${a.size / 2}px)`,
+                  top:  `calc(50% + ${y}px - ${a.size / 2}px)`,
+                }}
+                initial={{ opacity: 0, scale: 0.6 }}
+                animate={inView ? { opacity: 0.5, scale: 1 } : {}}
+                transition={{ delay: 0.6 + i * 0.12, duration: 0.7 }}
+              >
+                <motion.div
+                  className="rounded-full flex items-center justify-center text-sm shadow-sm"
+                  style={{ width: a.size, height: a.size, background: a.color, border: '1.5px solid rgba(44,39,32,0.08)' }}
+                  animate={{ y: [0, -4, 0] }}
+                  transition={{ delay: i * 1.1, duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  {a.emoji}
+                </motion.div>
+                <span className="text-[9px] text-[#A89F8D] font-medium tracking-wide" style={{ marginTop: 2 }}>{a.label}</span>
+              </motion.div>
+            )
+          })}
+
+          {/* Ring 2 */}
+          {RING2.map((a, i) => {
+            const { x, y } = toXY(a.angle, a.dist)
+            return (
+              <motion.div key={i}
+                className="absolute flex flex-col items-center gap-1"
+                style={{
+                  left: `calc(50% + ${x}px - ${a.size / 2}px)`,
+                  top:  `calc(50% + ${y}px - ${a.size / 2}px)`,
+                }}
+                initial={{ opacity: 0, scale: 0.6 }}
+                animate={inView ? { opacity: 0.75, scale: 1 } : {}}
+                transition={{ delay: 0.4 + i * 0.15, duration: 0.7 }}
+              >
+                <motion.div
+                  className="rounded-full flex items-center justify-center text-base shadow"
+                  style={{ width: a.size, height: a.size, background: a.color, border: '2px solid rgba(44,39,32,0.1)' }}
+                  animate={{ y: [0, -6, 0] }}
+                  transition={{ delay: i * 1.4, duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  {a.emoji}
+                </motion.div>
+                <span className="text-[10px] text-[#7C7267] font-medium tracking-wide" style={{ marginTop: 2 }}>{a.label}</span>
+              </motion.div>
+            )
+          })}
+
+          {/* Ring 1 — Jaanu */}
+          {RING1.map((a, i) => {
+            const { x, y } = toXY(a.angle, a.dist)
+            return (
+              <motion.div key={i}
+                className="absolute flex flex-col items-center gap-1"
+                style={{
+                  left: `calc(50% + ${x}px - ${a.size / 2}px)`,
+                  top:  `calc(50% + ${y}px - ${a.size / 2}px)`,
+                }}
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={inView ? { opacity: 1, scale: 1 } : {}}
+                transition={{ delay: 0.2, duration: 0.9 }}
+              >
+                {/* glow ring */}
+                <motion.div className="absolute rounded-full"
+                  style={{ width: a.size + 20, height: a.size + 20, top: -10, left: -10, background: '#FAD1D8', opacity: 0.35, filter: 'blur(8px)' }}
+                  animate={{ scale: [1, 1.15, 1], opacity: [0.35, 0.55, 0.35] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <motion.div
+                  className="relative rounded-full flex items-center justify-center text-2xl shadow-lg"
+                  style={{ width: a.size, height: a.size, background: a.color, border: '2.5px solid #FAD1D8' }}
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  {a.emoji}
+                </motion.div>
+                <span className="text-[11px] font-semibold text-[#2C2720] tracking-wide" style={{ marginTop: 4 }}>{a.label}</span>
+              </motion.div>
+            )
+          })}
+
+          {/* Center — You */}
+          <motion.div
+            className="absolute flex flex-col items-center"
+            style={{ left: 'calc(50% - 44px)', top: 'calc(50% - 44px)' }}
+            initial={{ opacity: 0, scale: 0 }}
+            animate={inView ? { opacity: 1, scale: 1 } : {}}
+            transition={{ delay: 0.1, duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }}
+          >
+            {/* double glow */}
+            <motion.div className="absolute rounded-full"
+              style={{ width: 120, height: 120, top: -16, left: -16, background: 'radial-gradient(circle, #D4A373 0%, transparent 70%)', opacity: 0.18 }}
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <motion.div
+              className="relative rounded-full flex items-center justify-center text-3xl shadow-xl"
+              style={{ width: 88, height: 88, background: '#FDFCF0', border: '3px solid #D4A373' }}
+              animate={{ scale: [1, 1.04, 1] }}
+              transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              🫵
+            </motion.div>
+            <span className="text-[12px] font-semibold text-[#2C2720] mt-2 tracking-wide">You</span>
+          </motion.div>
+
+          {/* Caption */}
+          <motion.p
+            className="absolute bottom-0 left-0 right-0 text-center text-[12px] text-[#A89F8D] italic"
+            initial={{ opacity: 0 }}
+            animate={inView ? { opacity: 1 } : {}}
+            transition={{ delay: 1, duration: 0.8 }}
+          >
+            Your world — exactly the people who matter.
+          </motion.p>
+        </motion.div>
       </div>
     </section>
   )
