@@ -1,100 +1,175 @@
 'use client'
 
 import Link from 'next/link'
-import { motion, useInView, useDragControls } from 'framer-motion'
-import { useRef, useState } from 'react'
+import { motion, useInView } from 'framer-motion'
+import { useRef, useState, useEffect } from 'react'
 
-// ─── Avatar data ───────────────────────────────────────────────────────────────
-const MY_AVATAR = {
-  emoji: '🧑‍💻',
-  label: 'you',
-  isMe: true,
+// ─── Same SVG face renderers as AudienceSection ───────────────────────────────
+const FACES = [
+  // 0: girl light skin, bun
+  (s: number, k: string) => (<svg key={k} width={s} height={s} viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#FAD1D8"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#FDDBB4"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#FDDBB4"/><ellipse cx="32" cy="18" rx="13" ry="10" fill="#3D2314"/><ellipse cx="20" cy="22" rx="5" ry="7" fill="#3D2314"/><ellipse cx="44" cy="22" rx="5" ry="7" fill="#3D2314"/><circle cx="26" cy="30" r="1.2" fill="#3D2314"/><circle cx="38" cy="30" r="1.2" fill="#3D2314"/><path d="M28 37 Q32 40 36 37" stroke="#C17B6B" strokeWidth="1.5" strokeLinecap="round" fill="none"/><ellipse cx="24" cy="36" rx="3" ry="1.5" fill="#F4A0A0" opacity="0.5"/><ellipse cx="40" cy="36" rx="3" ry="1.5" fill="#F4A0A0" opacity="0.5"/></svg>),
+  // 1: boy medium skin, short hair
+  (s: number, k: string) => (<svg key={k} width={s} height={s} viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#DBC0E7"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#C68642"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#C68642"/><rect x="19" y="15" width="26" height="14" rx="6" fill="#2C1A0E"/><circle cx="26" cy="30" r="1.3" fill="#2C1A0E"/><circle cx="38" cy="30" r="1.3" fill="#2C1A0E"/><path d="M28 37 Q32 39 36 37" stroke="#A0522D" strokeWidth="1.5" strokeLinecap="round" fill="none"/></svg>),
+  // 2: girl dark skin, curly
+  (s: number, k: string) => (<svg key={k} width={s} height={s} viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#C9E6EE"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#8D5524"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#8D5524"/><circle cx="22" cy="22" r="8" fill="#1C0A00"/><circle cx="32" cy="18" r="9" fill="#1C0A00"/><circle cx="42" cy="22" r="8" fill="#1C0A00"/><circle cx="26" cy="30" r="1.3" fill="#1C0A00"/><circle cx="38" cy="30" r="1.3" fill="#1C0A00"/><path d="M28 37 Q32 40 36 37" stroke="#6B3A2A" strokeWidth="1.5" strokeLinecap="round" fill="none"/><ellipse cx="24" cy="36" rx="3" ry="1.5" fill="#C17B6B" opacity="0.4"/><ellipse cx="40" cy="36" rx="3" ry="1.5" fill="#C17B6B" opacity="0.4"/></svg>),
+  // 3: boy light skin, wavy
+  (s: number, k: string) => (<svg key={k} width={s} height={s} viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#D4E6D0"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#FDDBB4"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#FDDBB4"/><path d="M19 26 Q18 16 32 15 Q46 16 45 26 Q43 18 32 18 Q21 18 19 26Z" fill="#6B3F1E"/><circle cx="26" cy="30" r="1.3" fill="#3D2314"/><circle cx="38" cy="30" r="1.3" fill="#3D2314"/><path d="M28 37 Q32 39 36 37" stroke="#C17B6B" strokeWidth="1.5" strokeLinecap="round" fill="none"/></svg>),
+  // 4: girl medium skin, ponytail
+  (s: number, k: string) => (<svg key={k} width={s} height={s} viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#F0E6C8"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#C68642"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#C68642"/><ellipse cx="32" cy="17" rx="14" ry="8" fill="#5C3317"/><rect x="28" y="10" width="8" height="16" rx="4" fill="#5C3317"/><circle cx="26" cy="30" r="1.3" fill="#3D2314"/><circle cx="38" cy="30" r="1.3" fill="#3D2314"/><path d="M28 37 Q32 40 36 37" stroke="#A0522D" strokeWidth="1.5" strokeLinecap="round" fill="none"/><ellipse cx="24" cy="36" rx="3" ry="1.5" fill="#F4A0A0" opacity="0.5"/><ellipse cx="40" cy="36" rx="3" ry="1.5" fill="#F4A0A0" opacity="0.5"/></svg>),
+  // 5: boy dark skin, fade
+  (s: number, k: string) => (<svg key={k} width={s} height={s} viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#E8D5C4"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#4A2912"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#4A2912"/><ellipse cx="32" cy="19" rx="13" ry="8" fill="#1C0A00"/><circle cx="26" cy="30" r="1.3" fill="#1C0A00"/><circle cx="38" cy="30" r="1.3" fill="#1C0A00"/><path d="M28 37 Q32 39 36 37" stroke="#6B3A2A" strokeWidth="1.5" strokeLinecap="round" fill="none"/></svg>),
+]
+
+// ─── YouAvatar — same as AudienceSection ──────────────────────────────────────
+function YouAvatar({ size }: { size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
+      <circle cx="32" cy="32" r="32" fill="#FDFCF0"/>
+      <ellipse cx="32" cy="38" rx="16" ry="14" fill="#FDDBB4"/>
+      <ellipse cx="32" cy="28" rx="13" ry="13" fill="#FDDBB4"/>
+      <path d="M19 26 Q18 16 32 15 Q46 16 45 26 Q43 18 32 18 Q21 18 19 26Z" fill="#4A2912"/>
+      <circle cx="26" cy="30" r="1.5" fill="#2C1A0E"/>
+      <circle cx="38" cy="30" r="1.5" fill="#2C1A0E"/>
+      <path d="M27 36 Q32 40 37 36" stroke="#C17B6B" strokeWidth="2" strokeLinecap="round" fill="none"/>
+      <ellipse cx="24" cy="35" rx="3.5" ry="2" fill="#F4A0A0" opacity="0.45"/>
+      <ellipse cx="40" cy="35" rx="3.5" ry="2" fill="#F4A0A0" opacity="0.45"/>
+    </svg>
+  )
 }
 
-const FRIEND_AVATARS = [
-  { id: 1,  emoji: '👩‍🎨', label: 'the creative one',   color: '#E8C5B0', startX: '5%',  delay: 0.05 },
-  { id: 2,  emoji: '👨‍🎸', label: 'the fun one',         color: '#B0C9E8', startX: '16%', delay: 0.18 },
-  { id: 3,  emoji: '👩‍💻', label: 'the smart one',       color: '#C8E8B0', startX: '27%', delay: 0.08 },
-  { id: 4,  emoji: '🧔',   label: 'your ride-or-die',   color: '#E8B0C5', startX: '38%', delay: 0.25 },
-  { id: 5,  emoji: '👩‍🍳', label: 'who feeds you',      color: '#E8DDB0', startX: '54%', delay: 0.12 },
-  { id: 6,  emoji: '🧕',   label: 'your rock',          color: '#D4B0E8', startX: '65%', delay: 0.30 },
-  { id: 7,  emoji: '👨‍🚀', label: 'the dreamer',        color: '#B0E8E4', startX: '76%', delay: 0.07 },
-  { id: 8,  emoji: '👩‍⚕️', label: 'the wise one',       color: '#E8C9B0', startX: '87%', delay: 0.20 },
-  { id: 9,  emoji: '🧑‍🎤', label: 'your person',        color: '#F5B8D0', startX: '94%', delay: 0.15 },
+// ─── 9 friend avatars: varied sizes, all within 8%–92% to stay on screen ──────
+// sizes range 80–140px to feel big + overlapping. zIndex controls layering.
+const FRIENDS = [
+  { id: 1, faceIdx: 0, label: 'the creative one', size: 110, leftPct: 4,  delay: 0.06, z: 3 },
+  { id: 2, faceIdx: 1, label: 'the fun one',       size: 130, leftPct: 14, delay: 0.20, z: 5 },
+  { id: 3, faceIdx: 2, label: 'the smart one',     size: 96,  leftPct: 24, delay: 0.10, z: 2 },
+  { id: 4, faceIdx: 3, label: 'your ride-or-die',  size: 140, leftPct: 35, delay: 0.28, z: 6 },
+  { id: 5, faceIdx: 4, label: 'who feeds you',     size: 104, leftPct: 55, delay: 0.14, z: 4 },
+  { id: 6, faceIdx: 5, label: 'your rock',         size: 128, leftPct: 64, delay: 0.32, z: 7 },
+  { id: 7, faceIdx: 1, label: 'the dreamer',       size: 92,  leftPct: 74, delay: 0.08, z: 2 },
+  { id: 8, faceIdx: 0, label: 'the wise one',      size: 118, leftPct: 81, delay: 0.22, z: 5 },
+  { id: 9, faceIdx: 2, label: 'your person',       size: 100, leftPct: 88, delay: 0.16, z: 3 },
 ]
 
 // ─── Single draggable friend avatar ──────────────────────────────────────────
-function FriendAvatar({ emoji, label, color, startX, delay }: typeof FRIEND_AVATARS[0]) {
+function FriendAvatar({
+  faceIdx, label, size, leftPct, delay, z,
+}: typeof FRIENDS[0]) {
   const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '0px 0px -40px 0px' })
+  const inView = useInView(ref, { once: true, margin: '0px 0px -20px 0px' })
   const [landed, setLanded] = useState(false)
   const [dragging, setDragging] = useState(false)
+  const [constraintRef, setConstraintRef] = useState<HTMLElement | null>(null)
+
+  // grab the parent container for drag constraints
+  useEffect(() => {
+    if (ref.current) {
+      const el = (ref.current as HTMLElement).closest('.avatar-stage') as HTMLElement | null
+      if (el) setConstraintRef(el)
+    }
+  }, [])
 
   return (
     <motion.div
       ref={ref}
       drag={landed}
-      dragElastic={0.18}
-      dragMomentum={true}
-      whileDrag={{ scale: 1.12, zIndex: 50, cursor: 'grabbing' }}
+      dragElastic={0.12}
+      dragMomentum
+      dragConstraints={constraintRef ?? undefined}
+      whileDrag={{ scale: 1.15, zIndex: 60, cursor: 'grabbing' }}
       onDragStart={() => setDragging(true)}
       onDragEnd={() => setDragging(false)}
-      initial={{ y: -220, opacity: 0, scale: 0.7 }}
+      initial={{ y: -260, opacity: 0, scale: 0.65 }}
       animate={inView ? {
         y: 0,
         opacity: 1,
         scale: 1,
         transition: {
           delay,
-          duration: 0.75,
+          duration: 0.8,
           type: 'spring',
-          stiffness: 140,
-          damping: 13,
+          stiffness: 120,
+          damping: 12,
           onComplete: () => setLanded(true),
-        }
+        },
       } : {}}
       whileHover={landed && !dragging ? {
-        y: -10,
-        scale: 1.08,
-        transition: { type: 'spring', stiffness: 380, damping: 18 }
+        y: -12,
+        scale: 1.07,
+        transition: { type: 'spring', stiffness: 380, damping: 18 },
       } : {}}
       style={{
         position: 'absolute',
-        left: startX,
+        left: `calc(${leftPct}% - ${size / 2}px)`,
         bottom: 0,
+        zIndex: dragging ? 60 : z,
         cursor: landed ? 'grab' : 'default',
-        zIndex: dragging ? 50 : 10,
         touchAction: 'none',
       }}
-      className="flex flex-col items-center gap-2 select-none"
+      className="flex flex-col items-center gap-1 select-none"
     >
-      {/* Circle avatar */}
       <div
-        style={{ background: color }}
-        className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center text-3xl sm:text-4xl shadow-lg"
+        className="rounded-full overflow-hidden"
+        style={{
+          width: size,
+          height: size,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.40)',
+          border: '2px solid rgba(255,255,255,0.06)',
+        }}
       >
-        {emoji}
+        {FACES[faceIdx](size, `ff-${faceIdx}-${leftPct}`)}
       </div>
-      {/* Label */}
-      <span className="text-[10px] text-[#5A554F] font-medium whitespace-nowrap tracking-wide">
+      <span
+        style={{
+          fontSize: Math.max(9, size * 0.085),
+          color: '#5A554F',
+          whiteSpace: 'nowrap',
+          fontWeight: 500,
+          letterSpacing: '0.04em',
+        }}
+      >
         {label}
       </span>
     </motion.div>
   )
 }
 
-// ─── My static center avatar ─────────────────────────────────────────────────
+// ─── My static avatar — center, never moves ───────────────────────────────────
 function MyAvatar() {
+  const size = 136
   return (
-    <div className="absolute left-1/2 -translate-x-1/2 bottom-0 flex flex-col items-center gap-2 z-20">
-      <div className="relative">
-        {/* Glow ring */}
-        <div className="absolute inset-0 rounded-full bg-[#C17B6B]/30 blur-md scale-110" />
-        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#C17B6B] flex items-center justify-center text-4xl sm:text-5xl shadow-xl relative z-10 border-[3px] border-[#F5F0E8]/20">
-          🧑‍💻
-        </div>
+    <div
+      className="absolute flex flex-col items-center gap-1 select-none"
+      style={{ left: `calc(50% - ${size / 2}px)`, bottom: 0, zIndex: 20 }}
+    >
+      {/* pulse glow */}
+      <motion.div
+        className="absolute rounded-full"
+        style={{
+          width: size + 48,
+          height: size + 48,
+          top: -24,
+          left: -24,
+          background: 'radial-gradient(circle, rgba(193,123,107,0.38) 0%, transparent 68%)',
+          pointerEvents: 'none',
+        }}
+        animate={{ scale: [1, 1.22, 1], opacity: [0.6, 1, 0.6] }}
+        transition={{ duration: 3.6, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      <div
+        className="rounded-full overflow-hidden relative"
+        style={{
+          width: size,
+          height: size,
+          border: '3px solid #D4A373',
+          boxShadow: '0 8px 40px rgba(212,163,115,0.45), 0 2px 8px rgba(0,0,0,0.30)',
+        }}
+      >
+        <YouAvatar size={size} />
       </div>
-      <span className="text-[11px] text-[#C17B6B] font-semibold tracking-widest uppercase">you</span>
+      <span style={{ fontSize: 11, color: '#C17B6B', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+        you
+      </span>
     </div>
   )
 }
@@ -103,7 +178,7 @@ function MyAvatar() {
 export default function Footer() {
   const year = new Date().getFullYear()
   const sectionRef = useRef(null)
-  const inView = useInView(sectionRef, { once: true, margin: '0px 0px -80px 0px' })
+  const inView = useInView(sectionRef, { once: true, margin: '0px 0px -60px 0px' })
 
   return (
     <footer className="bg-[#100F0D] text-[#9A9589] overflow-hidden">
@@ -166,10 +241,10 @@ export default function Footer() {
       {/* ── ANIMATED SECTION — full width, below everything ── */}
       <div
         ref={sectionRef}
-        className="relative w-full border-t border-[#1E1C18] overflow-visible"
+        className="relative w-full border-t border-[#1E1C18]"
         style={{ background: 'linear-gradient(to top, #0A0908 0%, #100F0D 100%)' }}
       >
-        {/* Big tagline */}
+        {/* Tagline */}
         <div className="max-w-5xl mx-auto px-5 sm:px-8 pt-20 pb-8 text-center">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -210,24 +285,28 @@ export default function Footer() {
           </motion.p>
         </div>
 
-        {/* Avatar stage — fixed height container */}
+        {/* Avatar stage — clipped so nothing escapes horizontally */}
         <div
-          className="relative w-full mx-auto"
-          style={{ height: 180, maxWidth: '100%', overflow: 'visible' }}
+          className="avatar-stage relative w-full"
+          style={{
+            height: 200,
+            overflow: 'hidden',
+          }}
         >
-          {/* My avatar — static center */}
+          {/* My avatar — static center, never falls */}
           <MyAvatar />
 
-          {/* 9 falling friend avatars */}
-          {FRIEND_AVATARS.map(a => (
+          {/* 9 falling friends */}
+          {FRIENDS.map(a => (
             <FriendAvatar key={a.id} {...a} />
           ))}
         </div>
 
-        {/* Ground gradient */}
-        <div className="h-24 w-full" style={{
-          background: 'linear-gradient(to top, #0A0908 40%, transparent 100%)'
-        }} />
+        {/* Ground fade */}
+        <div
+          className="h-16 w-full"
+          style={{ background: 'linear-gradient(to top, #0A0908 50%, transparent 100%)' }}
+        />
       </div>
 
     </footer>
