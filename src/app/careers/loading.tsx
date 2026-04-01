@@ -16,51 +16,71 @@ export default function CareersLoading() {
         }}
       >
         {/* Back link skeleton */}
-        <div style={{ width: 120, height: 14, borderRadius: 6, background: '#1c1b19', marginBottom: 48 }} />
+        <div style={{
+          width: '120px', height: '13px', borderRadius: '6px',
+          marginBottom: '48px',
+          background: 'linear-gradient(90deg, #1e1d1b 25%, #2a2927 50%, #1e1d1b 75%)',
+          backgroundSize: '200% 100%',
+          animation: 'shimmer 1.6s ease-in-out infinite',
+        }} />
 
         {/* Brand skeleton */}
-        <div style={{ width: 72, height: 14, borderRadius: 6, background: '#1c1b19', marginBottom: 20 }} />
+        <div style={{
+          width: '80px', height: '14px', borderRadius: '5px',
+          marginBottom: '16px',
+          background: 'linear-gradient(90deg, #1e1d1b 25%, #2a2927 50%, #1e1d1b 75%)',
+          backgroundSize: '200% 100%',
+          animation: 'shimmer 1.6s ease-in-out 0.1s infinite',
+        }} />
 
         {/* Heading skeleton */}
-        <div style={{ width: '70%', height: 52, borderRadius: 8, background: '#1c1b19', marginBottom: 20 }} />
+        <div style={{
+          width: '70%', height: '48px', borderRadius: '8px',
+          marginBottom: '20px',
+          background: 'linear-gradient(90deg, #1e1d1b 25%, #2a2927 50%, #1e1d1b 75%)',
+          backgroundSize: '200% 100%',
+          animation: 'shimmer 1.6s ease-in-out 0.15s infinite',
+        }} />
 
         {/* Subtext skeleton */}
-        <div style={{ width: 180, height: 14, borderRadius: 6, background: '#1c1b19', marginBottom: 16 }} />
+        <div style={{
+          width: '140px', height: '14px', borderRadius: '5px',
+          marginBottom: '16px',
+          background: 'linear-gradient(90deg, #1e1d1b 25%, #2a2927 50%, #1e1d1b 75%)',
+          backgroundSize: '200% 100%',
+          animation: 'shimmer 1.6s ease-in-out 0.2s infinite',
+        }} />
 
-        {/* Pills skeleton */}
-        <div style={{ display: 'flex', gap: 10, marginBottom: 40 }}>
-          {[72, 90, 120].map((w, i) => (
-            <div key={i} style={{ width: w, height: 32, borderRadius: 999, background: '#1c1b19' }} />
+        {/* Pill skeletons */}
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '40px' }}>
+          {[80, 100, 150].map((w, i) => (
+            <div key={i} style={{
+              width: `${w}px`, height: '30px', borderRadius: '999px',
+              background: 'linear-gradient(90deg, #1e1d1b 25%, #2a2927 50%, #1e1d1b 75%)',
+              backgroundSize: '200% 100%',
+              animation: `shimmer 1.6s ease-in-out ${0.25 + i * 0.05}s infinite`,
+            }} />
           ))}
         </div>
 
         {/* Body text skeleton */}
-        <div style={{ width: '90%', height: 12, borderRadius: 6, background: '#1c1b19', marginBottom: 10 }} />
-        <div style={{ width: '75%', height: 12, borderRadius: 6, background: '#1c1b19' }} />
-      </div>
-
-      {/* Divider */}
-      <div style={{ maxWidth: '640px', margin: '0 auto', padding: '0 24px' }}>
-        <div style={{ height: 1, background: '#1c1b19' }} />
-      </div>
-
-      {/* Form skeleton */}
-      <div style={{ maxWidth: '640px', margin: '0 auto', padding: '48px 24px 0' }}>
-        {[['30%', 40], ['50%', 40], ['100%', 100], ['40%', 40]].map(([w, h], i) => (
-          <div key={i} style={{ marginBottom: 24 }}>
-            <div style={{ width: '30%', height: 12, borderRadius: 6, background: '#1c1b19', marginBottom: 10 }} />
-            <div style={{ width: w as string, height: h as number, borderRadius: 8, background: '#1c1b19' }} />
-          </div>
-        ))}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {[90, 70].map((pct, i) => (
+            <div key={i} style={{
+              width: `${pct}%`, height: '13px', borderRadius: '5px',
+              background: 'linear-gradient(90deg, #1e1d1b 25%, #2a2927 50%, #1e1d1b 75%)',
+              backgroundSize: '200% 100%',
+              animation: `shimmer 1.6s ease-in-out ${0.3 + i * 0.05}s infinite`,
+            }} />
+          ))}
+        </div>
       </div>
 
       <style>{`
         @keyframes shimmer {
-          0%   { opacity: 0.4; }
-          50%  { opacity: 0.7; }
-          100% { opacity: 0.4; }
+          0%   { background-position: -200% 0; }
+          100% { background-position:  200% 0; }
         }
-        main > * > div[style] { animation: shimmer 1.6s ease-in-out infinite; }
       `}</style>
     </main>
   )
