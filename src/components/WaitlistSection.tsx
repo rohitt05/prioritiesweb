@@ -24,10 +24,10 @@ export default function WaitlistSection() {
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ email }),
       })
-      const data = await res.json()
+      await res.json()
       if (!res.ok) throw new Error('failed')
       setSubmit(true)
-    } catch (err) {
+    } catch {
       setError('Something went wrong. Please try again.')
     } finally {
       setLoading(false)
@@ -38,7 +38,6 @@ export default function WaitlistSection() {
     <section
       id="waitlist"
       ref={ref}
-      suppressHydrationWarning
       className="relative py-20 sm:py-28 lg:py-36 px-5 sm:px-8 bg-[#F7F4E9] overflow-hidden"
     >
       {['#FAD1D8','#DBC0E7','#C9E6EE','#A8E6CF','#FFD4B8'].map((c, i) => (
@@ -88,88 +87,72 @@ export default function WaitlistSection() {
           and help shape what Priorities becomes.
         </motion.p>
 
-        {/* Only render the interactive form after client hydration */}
-        {mounted && (
-          <AnimatePresence mode="wait">
-            {!submitted ? (
-              <motion.div
-                key="form"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-                className="flex flex-col gap-3 w-full"
-              >
-                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={e => { setEmail(e.target.value); setError('') }}
-                    placeholder="your@email.com"
-                    required
-                    className="flex-1 px-4 sm:px-5 py-4 rounded-2xl bg-white border border-[rgba(67,61,53,0.12)] text-[#2C2720] placeholder-[#A89F8D] text-[14px] outline-none focus:border-[#D4A373] transition-colors shadow-sm min-w-0"
-                  />
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="btn-ink justify-center py-4 px-6 text-[14px] whitespace-nowrap"
-                    style={{ transition: 'transform 0.15s ease, background 0.25s ease' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.03)' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)' }}
-                    onMouseDown={e  => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)' }}
-                    onMouseUp={e    => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.03)' }}
-                  >
-                    {loading ? (
-                      <span className="inline-block w-4 h-4 rounded-full border-2 border-[#FDFCF0]/40 border-t-[#FDFCF0] animate-spin" />
-                    ) : 'Join Waitlist →'}
-                  </button>
-                </form>
-                {error && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-[12px] text-red-400 text-left px-1"
-                  >{error}</motion.p>
-                )}
-              </motion.div>
-            ) : (
-              <motion.div
-                key="success"
-                initial={{ opacity: 0, scale: 0.88, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                className="card p-8 sm:p-10 flex flex-col items-center gap-4"
-              >
+        {/* Form area — only rendered client-side to avoid hydration mismatch */}
+        <div suppressHydrationWarning>
+          {mounted && (
+            <AnimatePresence mode="wait">
+              {!submitted ? (
                 <motion.div
-                  initial={{ scale: 0, rotate: -20 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                  className="text-5xl"
-                >🫶</motion.div>
-                <h3 className="font-serif italic text-[22px] font-bold text-[#2C2720]">You&apos;re on the list!</h3>
-                <p className="text-[#7C7267] text-[14px]">We&apos;ll reach out when it&apos;s your turn. Stay close.</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        )}
-
-        {/* Static fallback shown during SSR / before hydration */}
-        {!mounted && (
-          <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="email"
-              placeholder="your@email.com"
-              className="flex-1 px-4 sm:px-5 py-4 rounded-2xl bg-white border border-[rgba(67,61,53,0.12)] text-[#2C2720] placeholder-[#A89F8D] text-[14px] outline-none shadow-sm min-w-0"
-              readOnly
-            />
-            <button
-              type="button"
-              className="btn-ink justify-center py-4 px-6 text-[14px] whitespace-nowrap"
-            >
-              Join Waitlist &rarr;
-            </button>
-          </div>
-        )}
+                  key="form"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ delay: 0.3, duration: 0.6 }}
+                  className="flex flex-col gap-3 w-full"
+                >
+                  <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={e => { setEmail(e.target.value); setError('') }}
+                      placeholder="your@email.com"
+                      required
+                      className="flex-1 px-4 sm:px-5 py-4 rounded-2xl bg-white border border-[rgba(67,61,53,0.12)] text-[#2C2720] placeholder-[#A89F8D] text-[14px] outline-none focus:border-[#D4A373] transition-colors shadow-sm min-w-0"
+                    />
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="btn-ink justify-center py-4 px-6 text-[14px] whitespace-nowrap"
+                      style={{ transition: 'transform 0.15s ease, background 0.25s ease' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.03)' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)' }}
+                      onMouseDown={e  => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)' }}
+                      onMouseUp={e    => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.03)' }}
+                    >
+                      {loading ? (
+                        <span className="inline-block w-4 h-4 rounded-full border-2 border-[#FDFCF0]/40 border-t-[#FDFCF0] animate-spin" />
+                      ) : 'Join Waitlist →'}
+                    </button>
+                  </form>
+                  {error && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-[12px] text-red-400 text-left px-1"
+                    >{error}</motion.p>
+                  )}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, scale: 0.88, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                  className="card p-8 sm:p-10 flex flex-col items-center gap-4"
+                >
+                  <motion.div
+                    initial={{ scale: 0, rotate: -20 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                    className="text-5xl"
+                  >🫶</motion.div>
+                  <h3 className="font-serif italic text-[22px] font-bold text-[#2C2720]">You&apos;re on the list!</h3>
+                  <p className="text-[#7C7267] text-[14px]">We&apos;ll reach out when it&apos;s your turn. Stay close.</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
+        </div>
 
         <p className="mt-5 text-[11px] text-[#A89F8D]">No spam. No noise. Just priorities.</p>
       </div>
