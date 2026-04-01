@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'framer-motion'
 
 const links = [
@@ -11,7 +11,6 @@ const links = [
 
 function NavLink({ label, href, onClose }: { label: string; href: string; onClose?: () => void }) {
   const [hovered, setHovered] = useState(false)
-
   return (
     <a
       href={href}
@@ -21,7 +20,6 @@ function NavLink({ label, href, onClose }: { label: string; href: string; onClos
       className="relative text-[13px] font-medium text-[#7C7267] hover:text-[#2C2720] transition-colors duration-200 py-1 px-0.5"
     >
       {label}
-      {/* Underline slide */}
       <motion.span
         className="absolute bottom-0 left-0 h-[1.5px] bg-[#433D35] rounded-full"
         initial={{ scaleX: 0, originX: 0 }}
@@ -39,7 +37,6 @@ export default function Navbar() {
   const { scrollY } = useScroll()
   useMotionValueEvent(scrollY, 'change', v => setScrolled(v > 60))
 
-  // Logo letters for hover animation
   const logoLetters = 'priorities'.split('')
 
   return (
@@ -49,28 +46,35 @@ export default function Navbar() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
         className="fixed top-0 left-0 right-0 z-50 flex justify-center"
-        style={{ paddingTop: scrolled ? '10px' : '18px', transition: 'padding 0.4s ease' }}
+        style={{
+          paddingTop:    scrolled ? '10px' : '14px',
+          paddingBottom: scrolled ? '0'    : '0',
+          transition: 'padding 0.4s ease',
+        }}
       >
-        {/* Floating pill */}
         <motion.div
           animate={{
-            width: scrolled ? '92%' : '100%',
-            maxWidth: scrolled ? '820px' : '100%',
-            borderRadius: scrolled ? '999px' : '0px',
-            paddingLeft: scrolled ? '20px' : '32px',
-            paddingRight: scrolled ? '20px' : '32px',
-            paddingTop: scrolled ? '10px' : '14px',
-            paddingBottom: scrolled ? '10px' : '14px',
-            backgroundColor: scrolled ? 'rgba(253,252,240,0.88)' : 'rgba(253,252,240,0)',
-            backdropFilter: scrolled ? 'blur(20px)' : 'blur(0px)',
+            width:           scrolled ? '90%'   : '100%',
+            maxWidth:        scrolled ? '820px' : '1152px',
+            borderRadius:    scrolled ? 999     : 0,
+            paddingLeft:     scrolled ? 20      : 32,
+            paddingRight:    scrolled ? 20      : 32,
+            paddingTop:      scrolled ? 10      : 14,
+            paddingBottom:   scrolled ? 10      : 14,
+            // ─ ALWAYS glassy, just stronger on scroll ─
+            backgroundColor: scrolled
+              ? 'rgba(253,252,240,0.88)'
+              : 'rgba(253,252,240,0.55)',
             boxShadow: scrolled
-              ? '0 2px 24px rgba(67,61,53,0.08), 0 0 0 1px rgba(67,61,53,0.06)'
-              : 'none',
+              ? '0 2px 32px rgba(67,61,53,0.10), 0 0 0 1px rgba(67,61,53,0.07)'
+              : '0 1px 16px rgba(67,61,53,0.05), 0 0 0 1px rgba(67,61,53,0.04)',
           }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="flex items-center justify-between w-full"
+          // backdrop-filter must stay on via className — Framer Motion can't animate it cleanly
+          className="flex items-center justify-between w-full backdrop-blur-xl"
+          style={{ WebkitBackdropFilter: 'blur(20px)', backdropFilter: 'blur(20px)' }}
         >
-          {/* ── Logo ── */}
+          {/* Logo — letter wave */}
           <motion.a
             href="#"
             className="flex items-baseline gap-[1px] cursor-pointer select-none"
@@ -92,7 +96,7 @@ export default function Navbar() {
             ))}
           </motion.a>
 
-          {/* ── Desktop links ── */}
+          {/* Desktop links */}
           <div className="hidden md:flex items-center gap-7 lg:gap-9">
             {links.map((item, i) => (
               <motion.div
@@ -106,7 +110,7 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* ── Right: CTA + hamburger ── */}
+          {/* CTA + hamburger */}
           <div className="flex items-center gap-3">
             <motion.a
               href="#waitlist"
@@ -120,7 +124,6 @@ export default function Navbar() {
               Join Waitlist
             </motion.a>
 
-            {/* Hamburger — morphs to X */}
             <motion.button
               className="md:hidden relative w-9 h-9 flex items-center justify-center rounded-full"
               onClick={() => setOpen(!open)}
@@ -142,9 +145,7 @@ export default function Navbar() {
         </motion.div>
       </motion.nav>
 
-      {/* ─────────────────────────────────────────
-           Mobile full-screen overlay drawer
-         ───────────────────────────────────────── */}
+      {/* Mobile full-screen overlay */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -153,9 +154,13 @@ export default function Navbar() {
             animate={{ opacity: 1, clipPath: 'circle(150% at calc(100% - 36px) 36px)' }}
             exit={{ opacity: 0, clipPath: 'circle(0% at calc(100% - 36px) 36px)' }}
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-0 z-40 bg-[#FDFCF0] flex flex-col justify-center items-center md:hidden"
+            className="fixed inset-0 z-40 flex flex-col justify-center items-center md:hidden"
+            style={{
+              background: 'rgba(253,252,240,0.92)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+            }}
           >
-            {/* Big staggered nav links */}
             <nav className="flex flex-col items-center gap-2 mb-12">
               {links.map((item, i) => (
                 <motion.a
@@ -173,7 +178,6 @@ export default function Navbar() {
               ))}
             </nav>
 
-            {/* Bottom CTA */}
             <motion.a
               href="#waitlist"
               onClick={() => setOpen(false)}
@@ -188,7 +192,6 @@ export default function Navbar() {
               Join Waitlist
             </motion.a>
 
-            {/* Decorative blobs */}
             <div className="absolute bottom-16 left-8 w-32 h-32 rounded-full bg-[#FAD1D8] opacity-30 blur-2xl pointer-events-none" />
             <div className="absolute top-20 right-8 w-24 h-24 rounded-full bg-[#DBC0E7] opacity-25 blur-2xl pointer-events-none" />
           </motion.div>
