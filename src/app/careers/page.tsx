@@ -1,14 +1,8 @@
-'use client'
+import dynamic from 'next/dynamic'
 
-import { useState, useEffect } from 'react'
+const TallyEmbed = dynamic(() => import('./TallyEmbed'), { ssr: false })
 
 export default function CareersPage() {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
   return (
     <main
       style={{
@@ -38,10 +32,7 @@ export default function CareersPage() {
             textDecoration: 'none',
             marginBottom: '48px',
             letterSpacing: '0.02em',
-            transition: 'color 180ms ease',
           }}
-          onMouseEnter={e => (e.currentTarget.style.color = '#9A9589')}
-          onMouseLeave={e => (e.currentTarget.style.color = '#4A4540')}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 5l-7 7 7 7"/>
@@ -78,7 +69,6 @@ export default function CareersPage() {
           Work at Priorities
         </h1>
 
-        {/* Subheading */}
         <p
           style={{
             fontSize: '16px',
@@ -91,15 +81,8 @@ export default function CareersPage() {
           We care about 3 things:
         </p>
 
-        {/* 3 values */}
-        <div
-          style={{
-            display: 'flex',
-            gap: '10px',
-            flexWrap: 'wrap',
-            marginBottom: '40px',
-          }}
-        >
+        {/* 3 value pills */}
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '40px' }}>
           {['Talent', 'Ownership', 'Hunger to build'].map((v) => (
             <span
               key={v}
@@ -118,14 +101,7 @@ export default function CareersPage() {
           ))}
         </div>
 
-        <p
-          style={{
-            fontSize: '15px',
-            lineHeight: 1.75,
-            color: '#4A4540',
-            maxWidth: '480px',
-          }}
-        >
+        <p style={{ fontSize: '15px', lineHeight: 1.75, color: '#4A4540', maxWidth: '480px' }}>
           No resume required. Just show us what you&apos;ve built and tell us why you care.
         </p>
       </div>
@@ -135,26 +111,8 @@ export default function CareersPage() {
         <div style={{ height: '1px', background: '#1c1b19' }} />
       </div>
 
-      {/* Tally Form — client-only to avoid hydration mismatch */}
-      <div style={{ width: '100%', minHeight: '700px' }}>
-        {mounted && (
-          <iframe
-            src="https://tally.so/embed/MeYzLp?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1"
-            width="100%"
-            height="700"
-            frameBorder={0}
-            marginHeight={0}
-            marginWidth={0}
-            title="Work at Priorities — Application Form"
-            style={{
-              display: 'block',
-              width: '100%',
-              border: 'none',
-              background: 'transparent',
-            }}
-          />
-        )}
-      </div>
+      {/* Tally form — fully client-side, no SSR */}
+      <TallyEmbed />
 
       {/* Footer note */}
       <div
