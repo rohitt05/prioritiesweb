@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { motion, useInView } from 'framer-motion'
-import { useRef, useState, useEffect, useCallback } from 'react'
+import { useRef, useState, useEffect } from 'react'
 
 const FACE_SVGS = [
   `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#FAD1D8"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#FDDBB4"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#FDDBB4"/><ellipse cx="32" cy="18" rx="13" ry="10" fill="#3D2314"/><ellipse cx="20" cy="22" rx="5" ry="7" fill="#3D2314"/><ellipse cx="44" cy="22" rx="5" ry="7" fill="#3D2314"/><circle cx="26" cy="30" r="1.2" fill="#3D2314"/><circle cx="38" cy="30" r="1.2" fill="#3D2314"/><path d="M28 37 Q32 40 36 37" stroke="#C17B6B" stroke-width="1.5" stroke-linecap="round" fill="none"/><ellipse cx="24" cy="36" rx="3" ry="1.5" fill="#F4A0A0" opacity="0.5"/><ellipse cx="40" cy="36" rx="3" ry="1.5" fill="#F4A0A0" opacity="0.5"/></svg>`,
@@ -25,40 +25,18 @@ const FRIENDS_DATA = [
   { faceIdx: 0, label: 'the wise one',      r: 58 },
   { faceIdx: 2, label: 'your person',       r: 52 },
 ]
-const YOU_DATA   = { faceIdx: 6, label: 'you', r: 70 }
-const ALL_DATA   = [...FRIENDS_DATA, YOU_DATA]
+const YOU_DATA = { faceIdx: 6, label: 'you', r: 70 }
+const ALL_DATA = [...FRIENDS_DATA, YOU_DATA]
 
-const TEXT_H  = 340
+const TEXT_H  = 280
 const LAND_H  = 340
 const TOTAL_H = TEXT_H + LAND_H
 
 function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
-  const canvasRef   = useRef<HTMLCanvasElement>(null)
-  const startedRef  = useRef(false)
-  const rafRef      = useRef<number>(0)
-  const bodiesRef   = useRef<any[]>([])
-  const mcRef       = useRef<any>(null)
-  const mouseRef    = useRef<any>(null)
-  const engineRef   = useRef<any>(null)
-  const isDragging  = useRef(false)
-  const wrapRef     = useRef<HTMLDivElement>(null)
-
-  // Translate page-level pointer events into canvas-local coords for Matter mouse
-  const getLocalXY = useCallback((e: PointerEvent | WheelEvent) => {
-    const canvas = canvasRef.current
-    if (!canvas) return null
-    const rect = canvas.getBoundingClientRect()
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top }
-  }, [])
-
-  // Hit-test: is (x,y) inside any body?
-  const hitBody = useCallback((x: number, y: number) => {
-    return bodiesRef.current.some((b: any) => {
-      const dx = b.position.x - x
-      const dy = b.position.y - y
-      return Math.sqrt(dx * dx + dy * dy) < b.__r + 8
-    })
-  }, [])
+  const canvasRef  = useRef<HTMLCanvasElement>(null)
+  const startedRef = useRef(false)
+  const rafRef     = useRef<number>(0)
+  const wrapRef    = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!trigger || startedRef.current || width === 0) return
@@ -78,9 +56,8 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
     })
 
     import('matter-js').then((M) => {
-      const { Engine, Runner, Bodies, Composite, Mouse, MouseConstraint, Events } = M
+      const { Engine, Runner, Bodies, Composite, Mouse, MouseConstraint } = M
       const engine = Engine.create({ gravity: { y: 2.2 } })
-      engineRef.current = engine
 
       const wo = { isStatic: true, render: { visible: false }, friction: 0.4, restitution: 0.2 }
       Composite.add(engine.world, [
@@ -106,21 +83,20 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
         return body
       })
       Composite.add(engine.world, bodies)
-      bodiesRef.current = bodies
 
-      // Use Matter Mouse on the canvas directly
+      // Matter mouse — attach directly to canvas so drag works
       const mouse = Mouse.create(canvas)
-      mouseRef.current = mouse
+      // Neutralise Matter's built-in wheel handler so it never blocks page scroll
+      ;(mouse as any).element.removeEventListener('wheel', (mouse as any).mousewheel)
       const mc = MouseConstraint.create(engine, {
         mouse,
         constraint: { stiffness: 0.18, render: { visible: false } },
       })
-      mcRef.current = mc
       Composite.add(engine.world, mc)
 
-      // Track drag state to distinguish drag vs. scroll intent
-      Events.on(mc, 'startdrag', () => { isDragging.current = true  })
-      Events.on(mc, 'enddrag',   () => { isDragging.current = false })
+      // Make sure native wheel always scrolls the page (passive, no block)
+      const onWheel = () => { /* noop — passive listener just stops Matter eating wheel */ }
+      canvas.addEventListener('wheel', onWheel, { passive: true })
 
       Runner.run(Runner.create(), engine)
 
@@ -167,44 +143,26 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
       }
       draw()
 
-      // Pointer events: only steal pointer-down if cursor is on a body, else pass scroll through
-      const onPointerDown = (e: PointerEvent) => {
-        const pos = getLocalXY(e)
-        if (!pos || !hitBody(pos.x, pos.y)) return
-        // Let Matter handle it — don't propagate to page scroll
-        e.stopPropagation()
-      }
-      const onPointerMove = (e: PointerEvent) => {
-        if (isDragging.current) e.stopPropagation()
-      }
-      const onWheel = (e: WheelEvent) => {
-        // Never block wheel — always let page scroll
-        if (mouseRef.current) {
-          (mouseRef.current as any).wheelDelta = 0
-        }
-      }
-
-      wrap.addEventListener('pointerdown', onPointerDown, { passive: false })
-      wrap.addEventListener('pointermove', onPointerMove, { passive: true  })
-      wrap.addEventListener('wheel',       onWheel,       { passive: true  })
-
       return () => {
         cancelAnimationFrame(rafRef.current)
-        wrap.removeEventListener('pointerdown', onPointerDown)
-        wrap.removeEventListener('pointermove', onPointerMove)
-        wrap.removeEventListener('wheel',       onWheel)
+        canvas.removeEventListener('wheel', onWheel)
       }
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trigger, width])
 
   return (
-    <div ref={wrapRef} style={{ position: 'absolute', inset: 0, cursor: 'default' }}>
+    <div ref={wrapRef} style={{ position: 'absolute', inset: 0 }}>
       <canvas
         ref={canvasRef}
         style={{
           display: 'block', width: '100%', height: TOTAL_H,
-          background: 'transparent', pointerEvents: 'none',
+          background: 'transparent',
+          // pointer-events ON so Matter Mouse can receive mousedown for dragging
+          pointerEvents: 'auto',
+          cursor: 'grab',
+          // sit behind the text overlay
+          position: 'relative', zIndex: 1,
         }}
       />
     </div>
@@ -230,16 +188,16 @@ function AnimatedBlock({ inView }: { inView: boolean }) {
     >
       <PhysicsStage trigger={inView} width={width} />
 
-      {/* text — above canvas, no pointer events so scroll passes through */}
+      {/* text — pointer-events:none so clicks fall through to canvas for dragging */}
       <div
-        className="relative text-center px-5 sm:px-8"
-        style={{ zIndex: 10, paddingTop: 48, pointerEvents: 'none' }}
+        className="absolute top-0 left-0 right-0 text-center px-5 sm:px-8"
+        style={{ zIndex: 10, paddingTop: 44, pointerEvents: 'none' }}
       >
         <motion.p
           initial={{ opacity: 0, y: 14 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.05, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="text-[#3A3630] text-[11px] tracking-[0.22em] uppercase font-semibold mb-4"
+          className="text-[#3A3630] text-[11px] tracking-[0.22em] uppercase font-semibold mb-5"
         >
           me and my 9 idiots
         </motion.p>
@@ -253,7 +211,7 @@ function AnimatedBlock({ inView }: { inView: boolean }) {
             fontStyle: 'italic', fontWeight: 700,
             fontSize: 'clamp(44px, 7.5vw, 90px)',
             lineHeight: 1.0, color: '#F5F0E8',
-            marginBottom: '0.18em', letterSpacing: '-0.02em',
+            marginBottom: '0.22em', letterSpacing: '-0.02em',
           }}
         >
           built with love,<br />
@@ -277,7 +235,7 @@ function AnimatedBlock({ inView }: { inView: boolean }) {
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : {}}
           transition={{ delay: 0.65, duration: 0.5 }}
-          className="text-[#272320] text-[10px] tracking-[0.18em] uppercase"
+          className="text-[#2A2724] text-[10px] tracking-[0.18em] uppercase"
         >
           grab &amp; drag them around
         </motion.p>
@@ -294,7 +252,7 @@ export default function Footer() {
   return (
     <footer ref={sectionRef} className="bg-[#0e0d0b] text-[#9A9589] overflow-hidden">
 
-      {/* ── top section: brand + links + copyright ── */}
+      {/* top: brand + links + copyright */}
       <div className="max-w-5xl mx-auto px-5 sm:px-8 pt-14 pb-10">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-10">
 
@@ -302,12 +260,7 @@ export default function Footer() {
           <div className="max-w-[220px]">
             <span className="font-serif italic text-[26px] font-bold text-[#F5F0E8] block mb-2">priorities</span>
             <p className="text-xs leading-relaxed text-[#4A4540] mb-3">9 people. Real moments. No noise.</p>
-            <p
-              style={{
-                fontFamily: 'Georgia,serif', fontStyle: 'italic',
-                fontSize: '13px', color: '#3A3530', lineHeight: 1.5,
-              }}
-            >
+            <p style={{ fontFamily: 'Georgia,serif', fontStyle: 'italic', fontSize: '13px', color: '#3A3530', lineHeight: 1.55 }}>
               built with love,<br />
               <span style={{ color: '#6B4035' }}>for love —</span><br />
               by your lover 🌸
@@ -320,30 +273,28 @@ export default function Footer() {
               <div>
                 <p className="text-[#F5F0E8] font-semibold mb-4 text-xs tracking-widest uppercase">Product</p>
                 <ul className="space-y-3">
-                  <li><a href="/#about"     className="hover:text-[#F5F0E8] transition-colors">About</a></li>
-                  <li><a href="/#features"  className="hover:text-[#F5F0E8] transition-colors">Features</a></li>
-                  <li><a href="/#waitlist"  className="hover:text-[#F5F0E8] transition-colors">Join Waitlist</a></li>
+                  <li><a href="/#about"    className="hover:text-[#F5F0E8] transition-colors">About</a></li>
+                  <li><a href="/#features" className="hover:text-[#F5F0E8] transition-colors">Features</a></li>
+                  <li><a href="/#waitlist" className="hover:text-[#F5F0E8] transition-colors">Join Waitlist</a></li>
                 </ul>
               </div>
               <div>
                 <p className="text-[#F5F0E8] font-semibold mb-4 text-xs tracking-widest uppercase">Company</p>
                 <ul className="space-y-3">
-                  <li><a href="mailto:hello@getpriorities.app"    className="hover:text-[#F5F0E8] transition-colors">Contact</a></li>
-                  <li><a href="mailto:support@getpriorities.app"  className="hover:text-[#F5F0E8] transition-colors">Support</a></li>
-                  <li><a href="mailto:careers@getpriorities.app"  className="hover:text-[#F5F0E8] transition-colors">Join Us</a></li>
+                  <li><a href="mailto:hello@getpriorities.app"   className="hover:text-[#F5F0E8] transition-colors">Contact</a></li>
+                  <li><a href="mailto:support@getpriorities.app" className="hover:text-[#F5F0E8] transition-colors">Support</a></li>
+                  <li><a href="mailto:careers@getpriorities.app" className="hover:text-[#F5F0E8] transition-colors">Join Us</a></li>
                 </ul>
               </div>
               <div>
                 <p className="text-[#F5F0E8] font-semibold mb-4 text-xs tracking-widest uppercase">Legal</p>
                 <ul className="space-y-3">
-                  <li><Link href="/privacy"  className="hover:text-[#F5F0E8] transition-colors">Privacy Policy</Link></li>
-                  <li><Link href="/terms"    className="hover:text-[#F5F0E8] transition-colors">Terms of Service</Link></li>
-                  <li><Link href="/cookies"  className="hover:text-[#F5F0E8] transition-colors">Cookie Policy</Link></li>
+                  <li><Link href="/privacy" className="hover:text-[#F5F0E8] transition-colors">Privacy Policy</Link></li>
+                  <li><Link href="/terms"   className="hover:text-[#F5F0E8] transition-colors">Terms of Service</Link></li>
+                  <li><Link href="/cookies" className="hover:text-[#F5F0E8] transition-colors">Cookie Policy</Link></li>
                 </ul>
               </div>
             </div>
-
-            {/* copyright — sits below the 3 columns, right-aligned */}
             <p className="text-xs text-[#2E2C29] text-right w-full">
               © {year} Priorities. All rights reserved. Made with 🌸 in India.
             </p>
@@ -352,7 +303,7 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* ── physics + tagline — no border, no extra space ── */}
+      {/* physics block — no border, no extra space */}
       <AnimatedBlock inView={inView} />
 
     </footer>
