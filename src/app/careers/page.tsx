@@ -1,6 +1,14 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+
 export default function CareersPage() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
     <main
       style={{
@@ -123,38 +131,29 @@ export default function CareersPage() {
       </div>
 
       {/* Divider */}
-      <div
-        style={{
-          maxWidth: '640px',
-          margin: '0 auto 0',
-          padding: '0 24px',
-        }}
-      >
+      <div style={{ maxWidth: '640px', margin: '0 auto', padding: '0 24px' }}>
         <div style={{ height: '1px', background: '#1c1b19' }} />
       </div>
 
-      {/* Tally Form Embed */}
-      <div
-        style={{
-          width: '100%',
-          minHeight: '700px',
-        }}
-      >
-        <iframe
-          src="https://tally.so/embed/MeYzLp?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1"
-          width="100%"
-          height="700"
-          frameBorder={0}
-          marginHeight={0}
-          marginWidth={0}
-          title="Work at Priorities — Application Form"
-          style={{
-            display: 'block',
-            width: '100%',
-            border: 'none',
-            background: 'transparent',
-          }}
-        />
+      {/* Tally Form — client-only to avoid hydration mismatch */}
+      <div style={{ width: '100%', minHeight: '700px' }}>
+        {mounted && (
+          <iframe
+            src="https://tally.so/embed/MeYzLp?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1"
+            width="100%"
+            height="700"
+            frameBorder={0}
+            marginHeight={0}
+            marginWidth={0}
+            title="Work at Priorities — Application Form"
+            style={{
+              display: 'block',
+              width: '100%',
+              border: 'none',
+              background: 'transparent',
+            }}
+          />
+        )}
       </div>
 
       {/* Footer note */}
