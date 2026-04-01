@@ -15,19 +15,26 @@ import Footer              from '@/components/Footer'
 
 export default function Home() {
   return (
-    <main className="relative bg-[#FDFCF0] overflow-x-hidden paper">
-      <Navbar />
-      <HeroSection />
-      <MarqueeBand />
-      <FilmsSection />
+    // NO overflow-x-hidden on main — it breaks position:sticky
+    // overflow clipping is handled per-section instead
+    <main className="relative bg-[#FDFCF0] paper">
+      <div className="overflow-x-hidden">
+        <Navbar />
+        <HeroSection />
+        <MarqueeBand />
+        <FilmsSection />
+      </div>
+      {/* CinematicSection must NOT be inside an overflow:hidden parent */}
       <CinematicSection />
-      <PriorityCarousel />
-      <TimelineSection />
-      <BentoFeatures />
-      <PositioningSection />
-      <AudienceSection />
-      <WaitlistSection />
-      <Footer />
+      <div className="overflow-x-hidden">
+        <PriorityCarousel />
+        <TimelineSection />
+        <BentoFeatures />
+        <PositioningSection />
+        <AudienceSection />
+        <WaitlistSection />
+        <Footer />
+      </div>
     </main>
   )
 }

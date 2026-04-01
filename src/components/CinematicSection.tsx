@@ -1,177 +1,138 @@
 'use client'
 import { useRef } from 'react'
-import { motion, useScroll, useTransform, useSpring, MotionValue } from 'framer-motion'
+import {
+  motion,
+  useScroll,
+  useTransform,
+  MotionValue,
+} from 'framer-motion'
 
-// ─── Persistent floating bubbles (always in BG across all scenes) ───────────
-const BUBBLES = [
-  { x: '6%',  y: '15%', size: 68,  color: '#C9E6EE', floatX: 8,  floatY: 18, dur: 7  },
-  { x: '82%', y: '10%', size: 50,  color: '#FAD1D8', floatX: -6, floatY: 14, dur: 9  },
-  { x: '12%', y: '62%', size: 42,  color: '#DBC0E7', floatX: 10, floatY: 20, dur: 8  },
-  { x: '76%', y: '68%', size: 78,  color: '#B8C88D', floatX: -8, floatY: 12, dur: 11 },
-  { x: '90%', y: '38%', size: 34,  color: '#FFD4B8', floatX: 6,  floatY: 16, dur: 6  },
-  { x: '3%',  y: '40%', size: 54,  color: '#E9DFB4', floatX: 12, floatY: 10, dur: 10 },
-  { x: '50%', y: '85%', size: 38,  color: '#FEC8D8', floatX: -4, floatY: 22, dur: 8  },
-  { x: '33%', y: '8%',  size: 30,  color: '#A8E6CF', floatX: 8,  floatY: 14, dur: 7  },
-  { x: '60%', y: '52%', size: 58,  color: '#C0AEDE', floatX: -10,floatY: 18, dur: 9  },
-  { x: '20%', y: '88%', size: 26,  color: '#DDB892', floatX: 6,  floatY: 10, dur: 12 },
-  { x: '93%', y: '80%', size: 44,  color: '#B6E3F4', floatX: -6, floatY: 16, dur: 8  },
-  { x: '44%', y: '28%', size: 22,  color: '#FAD1D8', floatX: 4,  floatY: 20, dur: 6  },
-]
-
-const FILM_CIRCLES = [
-  { x: '66%', y: '18%', size: 88,  color: '#C9E6EE', floatY: -16, dur: 9,  ring: true  },
-  { x: '16%', y: '32%', size: 66,  color: '#FAD1D8', floatY: 12,  dur: 11, ring: false },
-  { x: '80%', y: '60%', size: 60,  color: '#DDB892', floatY: -10, dur: 8,  ring: true  },
-  { x: '38%', y: '72%', size: 48,  color: '#B8C88D', floatY: 14,  dur: 10, ring: false },
-]
-
-// ─── 5 scenes ────────────────────────────────────────────────────────────────
+// ─── Scenes ──────────────────────────────────────────────────────────────────
 const SCENES = [
   {
-    // Scene 0 — opening
     label: null,
-    headline: null,
-    bigLine1: 'Life is a',
-    bigLine2: 'movie.',
+    icon: null,
+    heading: 'Life is a movie.',
+    headingItalic: true,
     body: 'Not every scene needs an audience —',
-    bodyItalic: 'just the ones who matter.',
+    bodyEm: 'just the ones who matter.',
     sub: null,
-    pill: null,
   },
   {
     label: 'Be the main character',
-    headline: '🔒',
-    bigLine1: null,
-    bigLine2: null,
-    body: 'No algorithm.',
-    bodyItalic: 'Your feed is yours.',
+    icon: '🔒',
+    heading: 'No algorithm.',
+    headingItalic: false,
+    body: 'Your feed is yours.',
+    bodyEm: null,
     sub: 'Nobody decides what you see, what you miss, or who you become.',
-    pill: '#D4A373',
   },
   {
     label: 'Be the main character',
-    headline: '👁️',
-    bigLine1: null,
-    bigLine2: null,
-    body: 'Only your circle sees.',
-    bodyItalic: 'Every viewer is someone you chose.',
+    icon: '👁️',
+    heading: 'Only your circle sees.',
+    headingItalic: false,
+    body: 'Every viewer is someone you chose.',
+    bodyEm: null,
     sub: 'What you share stays between the people you let in. Period.',
-    pill: '#B8C88D',
   },
   {
     label: 'Be the main character',
-    headline: '🚫',
-    bigLine1: null,
-    bigLine2: null,
-    body: "Don't get lost in the crowd.",
-    bodyItalic: 'No public feed. No strangers scrolling your life.',
+    icon: '🚫',
+    heading: "Don't get lost in the crowd.",
+    headingItalic: false,
+    body: 'No public feed. No strangers scrolling your life.',
+    bodyEm: null,
     sub: "You're not content. Your memories aren't for likes or algorithms.",
-    pill: '#C0AEDE',
   },
   {
     label: 'Be the main character',
-    headline: '✨',
-    bigLine1: null,
-    bigLine2: null,
-    body: 'No strangers, ever.',
-    bodyItalic: 'Priorities keeps them where they belong —',
-    sub: 'with the people you chose.',
-    pill: '#FAD1D8',
+    icon: '✨',
+    heading: 'No strangers, ever.',
+    headingItalic: false,
+    body: 'Priorities keeps them where they belong —',
+    bodyEm: 'with the people you chose.',
+    sub: null,
   },
 ]
 
-// ─── Floating bubble component ────────────────────────────────────────────────
-function Bubble({ b }: { b: typeof BUBBLES[0] }) {
-  return (
-    <motion.div
-      className="absolute rounded-full pointer-events-none"
-      style={{ left: b.x, top: b.y, width: b.size, height: b.size, background: b.color, opacity: 0.55 }}
-      animate={{
-        y: [0, -b.floatY, b.floatY * 0.4, 0],
-        x: [0, b.floatX * 0.5, -b.floatX * 0.3, 0],
-      }}
-      transition={{ duration: b.dur, repeat: Infinity, ease: 'easeInOut', repeatType: 'mirror' }}
-    />
-  )
-}
+// ─── Floating bubbles — positions & drift driven by scroll ───────────────────
+const BUBBLES = [
+  { x: 7,   y: 14,  s: 72,  c: '#C9B8CF', dx: 3,  dy: -4  },
+  { x: 83,  y: 8,   s: 52,  c: '#F2C4CE', dx: -2, dy: 5   },
+  { x: 11,  y: 60,  s: 44,  c: '#B8D4C8', dx: 4,  dy: -3  },
+  { x: 75,  y: 65,  s: 80,  c: '#B8C88D', dx: -5, dy: 4   },
+  { x: 91,  y: 38,  s: 36,  c: '#E8C99A', dx: 3,  dy: -6  },
+  { x: 2,   y: 42,  s: 56,  c: '#E2DCA0', dx: -3, dy: 5   },
+  { x: 50,  y: 82,  s: 40,  c: '#FEC8D8', dx: 2,  dy: -4  },
+  { x: 34,  y: 6,   s: 32,  c: '#A8D8C0', dx: -4, dy: 3   },
+  { x: 60,  y: 50,  s: 60,  c: '#C0AED0', dx: 5,  dy: -5  },
+  { x: 20,  y: 86,  s: 28,  c: '#D4A88C', dx: -2, dy: 4   },
+  { x: 93,  y: 78,  s: 46,  c: '#A8C8E0', dx: 3,  dy: -3  },
+  { x: 44,  y: 26,  s: 24,  c: '#F2C4CE', dx: -4, dy: 6   },
+  // film circles — larger, slightly ringed
+  { x: 66,  y: 16,  s: 92,  c: '#B8C8D8', dx: -3, dy: -5, ring: true },
+  { x: 15,  y: 28,  s: 68,  c: '#F2C4CE', dx: 4,  dy: 3,  ring: true },
+  { x: 78,  y: 56,  s: 62,  c: '#D4C8A0', dx: -2, dy: -4, ring: true },
+  { x: 38,  y: 70,  s: 50,  c: '#C0D4B8', dx: 5,  dy: 2,  ring: true },
+]
 
-function FilmCircle({ f }: { f: typeof FILM_CIRCLES[0] }) {
-  return (
-    <motion.div
-      className="absolute rounded-full pointer-events-none overflow-hidden"
-      style={{
-        left: f.x, top: f.y,
-        width: f.size, height: f.size,
-        background: f.color,
-        opacity: 0.6,
-        border: f.ring ? '2px solid rgba(255,255,255,0.15)' : 'none',
-        boxShadow: f.ring ? '0 0 0 4px rgba(255,255,255,0.04)' : 'none',
-      }}
-      animate={{ y: [0, f.floatY, 0], rotate: [0, 2, -1, 0] }}
-      transition={{ duration: f.dur, repeat: Infinity, ease: 'easeInOut', repeatType: 'mirror' }}
-    />
-  )
-}
-
-// ─── Single scene panel ───────────────────────────────────────────────────────
+// ─── Scene panel ─────────────────────────────────────────────────────────────
 function ScenePanel({
   scene,
   opacity,
+  y,
 }: {
-  scene: typeof SCENES[0]
+  scene: (typeof SCENES)[0]
   opacity: MotionValue<number>
+  y: MotionValue<number>
 }) {
   return (
     <motion.div
-      className="absolute inset-0 flex flex-col items-center justify-center px-6 sm:px-12 text-center"
-      style={{ opacity }}
+      className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center"
+      style={{ opacity, y }}
     >
-      {/* Label */}
       {scene.label && (
-        <div className="mb-6">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[rgba(212,163,115,0.25)] text-[11px] tracking-[0.15em] uppercase text-[#D4A373] font-medium">
-            <span className="w-1 h-1 rounded-full bg-[#D4A373] animate-pulse" />
+        <div className="mb-5">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[rgba(212,163,115,0.3)] text-[10px] tracking-[0.18em] uppercase text-[#D4A373] font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#D4A373] animate-pulse" />
             {scene.label}
           </span>
         </div>
       )}
 
-      {/* Big icon for privacy scenes */}
-      {scene.headline && (
-        <div className="text-[56px] sm:text-[72px] mb-4 leading-none">{scene.headline}</div>
+      {scene.icon && (
+        <div className="text-[52px] mb-3 leading-none select-none">{scene.icon}</div>
       )}
 
-      {/* Opening headline */}
-      {scene.bigLine1 && (
-        <div className="mb-2">
-          <h2 className="font-serif text-[clamp(52px,12vw,140px)] font-bold leading-[0.85] tracking-tight text-[#F5F0E8]">
-            {scene.bigLine1}
-          </h2>
-          <h2 className="font-serif text-[clamp(52px,12vw,140px)] font-bold leading-[0.85] tracking-tight italic text-[#D4A373]">
-            {scene.bigLine2}
-          </h2>
-        </div>
-      )}
+      <h2
+        className="font-serif leading-tight tracking-tight text-[#F0EBE3] mb-4"
+        style={{
+          fontSize: 'clamp(36px, 6vw, 80px)',
+          fontStyle: scene.headingItalic ? 'italic' : 'normal',
+          color: scene.headingItalic ? '#D4A373' : '#F0EBE3',
+        }}
+      >
+        {scene.heading}
+      </h2>
 
-      {/* Divider */}
-      <div className="my-5 flex items-center gap-4">
-        <div className="h-px w-10 sm:w-16 bg-[rgba(212,163,115,0.25)]" />
-        <span className="text-[#D4A373] text-sm">✦</span>
-        <div className="h-px w-10 sm:w-16 bg-[rgba(212,163,115,0.25)]" />
+      <div className="flex items-center gap-3 mb-5 opacity-40">
+        <div className="h-px w-12 bg-[#D4A373]" />
+        <span className="text-[#D4A373] text-xs">✦</span>
+        <div className="h-px w-12 bg-[#D4A373]" />
       </div>
 
-      {/* Body */}
-      <p className="text-[20px] sm:text-[26px] md:text-[32px] text-[#B8AFA3] font-light leading-snug max-w-xl">
+      <p className="text-[#A89E96] font-light leading-snug max-w-lg" style={{ fontSize: 'clamp(16px, 2.5vw, 24px)' }}>
         {scene.body}
-        {scene.bodyItalic && (
-          <><br className="hidden sm:block" />
-          <em className="text-[#F5F0E8] font-normal"> {scene.bodyItalic}</em></>
+        {scene.bodyEm && (
+          <>
+            {' '}<em className="text-[#F0EBE3] not-italic font-normal">{scene.bodyEm}</em>
+          </>
         )}
       </p>
 
-      {/* Sub */}
       {scene.sub && (
-        <p className="mt-4 text-[13px] sm:text-[15px] text-[#6E6660] max-w-md leading-relaxed">
+        <p className="mt-3 text-[13px] text-[#5A5450] max-w-sm leading-relaxed">
           {scene.sub}
         </p>
       )}
@@ -182,101 +143,159 @@ function ScenePanel({
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function CinematicSection() {
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // scrollYProgress goes 0→1 over the full 600vh scroll distance
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ['start start', 'end end'],
   })
 
-  // Each scene occupies 1/5 of scroll range
-  // Scene i is fully visible in its window, dissolves in/out at edges
-  const sceneCount = SCENES.length // 5
-  const step = 1 / sceneCount      // 0.2 each
-  const fade = 0.06                // crossfade overlap
+  const N = SCENES.length // 5
+  const step = 1 / N     // 0.2 per scene
+  const FADE = 0.05       // crossfade overlap
 
-  const sceneOpacities = SCENES.map((_, i) => {
-    const start  = i * step
-    const peak1  = start + fade
-    const peak2  = start + step - fade
-    const end    = start + step
-    return useTransform(
+  // Each scene: fades in → holds → fades out
+  // Also slight Y parallax on entry/exit (8px) for intimacy
+  const sceneOpacities = SCENES.map((_, i) =>
+    useTransform(
       scrollYProgress,
-      [start, peak1, peak2, end],
-      [0,     1,     1,     0]
+      [i * step, i * step + FADE, (i + 1) * step - FADE, (i + 1) * step],
+      [0, 1, 1, 0]
     )
-  })
+  )
+  const sceneYs = SCENES.map((_, i) =>
+    useTransform(
+      scrollYProgress,
+      [i * step, i * step + FADE, (i + 1) * step - FADE, (i + 1) * step],
+      [12, 0, 0, -12]
+    )
+  )
 
-  // Overall section fades out after last scene
-  const wrapperOp = useTransform(scrollYProgress, [0.88, 1], [1, 0])
+  // Bubble scroll-driven drift — each bubble shifts slightly based on scroll
+  // giving a parallax depth feel tied to the scroll position
+  const bubbleProgress = useTransform(scrollYProgress, [0, 1], [0, 1])
+
+  // Progress dots
+  const dotWidths = SCENES.map((_, i) =>
+    useTransform(
+      scrollYProgress,
+      [i * step, i * step + step * 0.4, i * step + step * 0.6, (i + 1) * step],
+      [6, 22, 22, 6]
+    )
+  )
+  const dotOpacities = SCENES.map((_, i) =>
+    useTransform(
+      scrollYProgress,
+      [i * step, i * step + step * 0.3, (i + 1) * step - step * 0.3, (i + 1) * step],
+      [0.3, 1, 1, 0.3]
+    )
+  )
 
   return (
-    <div ref={containerRef} style={{ height: '550vh' }} className="relative">
-      <motion.div
-        className="sticky top-0 w-full overflow-hidden bg-[#141210]"
-        style={{ height: '100svh', opacity: wrapperOp }}
+    // Outer: 600vh tall — this is the scroll spacer
+    <div ref={containerRef} style={{ height: '600vh' }}>
+      {/* Sticky inner: 100vh, pins to top while container scrolls */}
+      <div
+        className="sticky top-0 w-full bg-[#100F0D]"
+        style={{ height: '100vh' }}
       >
-        {/* Film grain */}
+        {/* Film grain overlay */}
         <div
-          className="absolute inset-0 z-0 pointer-events-none opacity-[0.04]"
+          className="absolute inset-0 pointer-events-none z-0"
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-            backgroundSize: '120px',
+            opacity: 0.035,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+            backgroundSize: '180px',
           }}
         />
 
-        {/* Warm center glow */}
+        {/* Warm centre vignette */}
         <div
-          className="absolute inset-0 z-0 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse 70% 55% at 50% 50%, rgba(212,163,115,0.06) 0%, transparent 70%)' }}
+          className="absolute inset-0 pointer-events-none z-0"
+          style={{
+            background: 'radial-gradient(ellipse 65% 50% at 50% 50%, rgba(212,163,115,0.07) 0%, transparent 70%)',
+          }}
         />
 
-        {/* Film strip edges */}
-        {(['left-0', 'right-0'] as const).map((side) => (
-          <div key={side} className={`absolute ${side} top-0 bottom-0 w-6 flex flex-col justify-between py-3 opacity-[0.07] pointer-events-none z-0`}>
-            {Array.from({ length: 22 }).map((_, i) => (
-              <div key={i} className="w-full h-3 bg-white rounded-[2px]" />
+        {/* Film-strip perforations on sides */}
+        {['left-0', 'right-0'].map((side) => (
+          <div
+            key={side}
+            className={`absolute ${side} top-0 bottom-0 w-5 flex flex-col justify-around py-2 pointer-events-none z-0`}
+            style={{ opacity: 0.06 }}
+          >
+            {Array.from({ length: 24 }).map((_, i) => (
+              <div key={i} className="w-full h-2.5 bg-white rounded-sm" />
             ))}
           </div>
         ))}
 
-        {/* ── Persistent floating layer (bubbles + film circles) ── */}
-        <div className="absolute inset-0 z-[1] pointer-events-none">
-          {BUBBLES.map((b, i) => <Bubble key={i} b={b} />)}
-          {FILM_CIRCLES.map((f, i) => <FilmCircle key={i} f={f} />)}
-        </div>
-
-        {/* ── Scene panels — crossfade on top of bubble layer ── */}
-        <div className="absolute inset-0 z-[2]">
-          {SCENES.map((scene, i) => (
-            <ScenePanel key={i} scene={scene} opacity={sceneOpacities[i]} />
-          ))}
-        </div>
-
-        {/* Scroll progress dots */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-10 pointer-events-none">
-          {SCENES.map((_, i) => {
-            const dotOp = useTransform(
-              scrollYProgress,
-              [i * step, i * step + step * 0.5, i * step + step],
-              [0.25, 1, 0.25]
-            )
+        {/* ── Bubble layer — scroll-driven parallax ── */}
+        <div className="absolute inset-0 z-[1] pointer-events-none overflow-hidden">
+          {BUBBLES.map((b, i) => {
+            // Scroll drives a slow drift — different speed per bubble
+            const bx = useTransform(bubbleProgress, [0, 1], [0, b.dx * 18])
+            const by = useTransform(bubbleProgress, [0, 1], [0, b.dy * 18])
             return (
               <motion.div
                 key={i}
-                className="rounded-full bg-[#D4A373]"
+                className="absolute rounded-full"
                 style={{
-                  opacity: dotOp,
-                  width: useTransform(scrollYProgress,
-                    [i * step, i * step + step * 0.5, i * step + step],
-                    [6, 20, 6]
-                  ),
-                  height: 6,
+                  left: `${b.x}%`,
+                  top: `${b.y}%`,
+                  width: b.s,
+                  height: b.s,
+                  background: b.c,
+                  opacity: (b as any).ring ? 0.45 : 0.5,
+                  border: (b as any).ring ? '1.5px solid rgba(255,255,255,0.12)' : 'none',
+                  x: bx,
+                  y: by,
+                }}
+                // Gentle idle float on top of scroll-driven position
+                animate={{
+                  y: [0, -(b.s * 0.18), b.s * 0.1, 0],
+                  x: [0, b.s * 0.08, -(b.s * 0.05), 0],
+                }}
+                transition={{
+                  duration: 6 + (i % 5) * 1.4,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                  repeatType: 'mirror',
+                  delay: i * 0.3,
                 }}
               />
             )
           })}
         </div>
 
-      </motion.div>
+        {/* ── Scene panels — crossfade on scroll ── */}
+        <div className="absolute inset-0 z-[2]">
+          {SCENES.map((scene, i) => (
+            <ScenePanel
+              key={i}
+              scene={scene}
+              opacity={sceneOpacities[i]}
+              y={sceneYs[i]}
+            />
+          ))}
+        </div>
+
+        {/* ── Progress dots ── */}
+        <div className="absolute bottom-7 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10 pointer-events-none">
+          {SCENES.map((_, i) => (
+            <motion.div
+              key={i}
+              className="rounded-full bg-[#D4A373]"
+              style={{
+                width: dotWidths[i],
+                height: 5,
+                opacity: dotOpacities[i],
+              }}
+            />
+          ))}
+        </div>
+
+      </div>
     </div>
   )
 }
