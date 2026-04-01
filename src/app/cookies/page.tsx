@@ -51,14 +51,13 @@ export default function CookiePolicy() {
                   </tr>
                   <tr className="bg-[#FDFCF9]">
                     <td className="px-3 py-2 border border-[#E0DAD0] font-medium">Functional</td>
-                    <td className="px-3 py-2 border border-[#E0DAD0]">Remember your preferences like theme, language, and last-visited section</td>
+                    <td className="px-3 py-2 border border-[#E0DAD0]">Remember your preferences like theme and last-visited section</td>
                     <td className="px-3 py-2 border border-[#E0DAD0]">Yes</td>
                   </tr>
                   <tr>
                     <td className="px-3 py-2 border border-[#E0DAD0] font-medium">Analytics</td>
-                    <td className="px-3 py-2 border border-[#E0DAD0]">Understand how visitors use our site (page views, scroll depth, button clicks). Data is anonymised and aggregated.</td>
+                    <td className="px-3 py-2 border border-[#E0DAD0]">Understand how visitors use our site. Data is anonymised and aggregated — no personal information is stored.</td>
                     <td className="px-3 py-2 border border-[#E0DAD0]">Yes</td>
-
                   </tr>
                   <tr className="bg-[#FDFCF9]">
                     <td className="px-3 py-2 border border-[#E0DAD0] font-medium">Marketing</td>
@@ -70,74 +69,24 @@ export default function CookiePolicy() {
             </div>
           </Section>
 
-          <Section title="3. Specific Cookies">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm border-collapse mt-2">
-                <thead>
-                  <tr className="bg-[#F3EFE8]">
-                    <th className="text-left px-3 py-2 font-semibold text-[#2C2720] border border-[#E0DAD0]">Name</th>
-                    <th className="text-left px-3 py-2 font-semibold text-[#2C2720] border border-[#E0DAD0]">Provider</th>
-                    <th className="text-left px-3 py-2 font-semibold text-[#2C2720] border border-[#E0DAD0]">Duration</th>
-                    <th className="text-left px-3 py-2 font-semibold text-[#2C2720] border border-[#E0DAD0]">Purpose</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="px-3 py-2 border border-[#E0DAD0] font-mono text-xs">sb-auth-token</td>
-                    <td className="px-3 py-2 border border-[#E0DAD0]">Supabase</td>
-                    <td className="px-3 py-2 border border-[#E0DAD0]">Session</td>
-                    <td className="px-3 py-2 border border-[#E0DAD0]">Authentication session token</td>
-                  </tr>
-                  <tr className="bg-[#FDFCF9]">
-                    <td className="px-3 py-2 border border-[#E0DAD0] font-mono text-xs">_priorities_session</td>
-                    <td className="px-3 py-2 border border-[#E0DAD0]">Priorities</td>
-                    <td className="px-3 py-2 border border-[#E0DAD0]">Session</td>
-                    <td className="px-3 py-2 border border-[#E0DAD0]">User session management</td>
-                  </tr>
-                  <tr>
-                    <td className="px-3 py-2 border border-[#E0DAD0] font-mono text-xs">_pref</td>
-                    <td className="px-3 py-2 border border-[#E0DAD0]">Priorities</td>
-                    <td className="px-3 py-2 border border-[#E0DAD0]">1 year</td>
-                    <td className="px-3 py-2 border border-[#E0DAD0]">User preferences (theme, etc.)</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </Section>
-
-          <Section title="4. Third-Party Services">
-            <p>We may use the following third-party services that set their own cookies:</p>
-            <ul className="list-disc pl-5 space-y-1">
-              <li><strong>Supabase</strong> — backend database and authentication. <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer" className="text-[#C17B6B] hover:underline">Supabase Privacy Policy</a></li>
-              <li><strong>Google Analytics</strong> (if enabled) — anonymised usage analytics. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-[#C17B6B] hover:underline">Google Privacy Policy</a></li>
-            </ul>
-          </Section>
-
-          <Section title="5. Managing Cookies">
-            <p>You can control and manage cookies in several ways:</p>
-            <h3 className="font-semibold text-[#2C2720] mt-4 mb-2">Browser settings</h3>
-            <p>Most browsers allow you to refuse or delete cookies. See your browser&apos;s help documentation:</p>
-            <ul className="list-disc pl-5 space-y-1">
+          <Section title="3. Managing Cookies">
+            <p>You can control and delete cookies through your browser settings. Note that disabling essential cookies may affect site functionality.</p>
+            <ul className="list-disc pl-5 space-y-1 mt-2">
               <li><a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener noreferrer" className="text-[#C17B6B] hover:underline">Google Chrome</a></li>
               <li><a href="https://support.mozilla.org/en-US/kb/enable-and-disable-cookies-website-preferences" target="_blank" rel="noopener noreferrer" className="text-[#C17B6B] hover:underline">Mozilla Firefox</a></li>
               <li><a href="https://support.apple.com/en-gb/guide/safari/sfri11471/mac" target="_blank" rel="noopener noreferrer" className="text-[#C17B6B] hover:underline">Apple Safari</a></li>
             </ul>
-            <p className="mt-3">Note: Disabling essential cookies may affect the functionality of our website.</p>
-            <h3 className="font-semibold text-[#2C2720] mt-4 mb-2">Opt-out tools</h3>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>Google Analytics opt-out: <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" className="text-[#C17B6B] hover:underline">Google Analytics Opt-out</a></li>
-            </ul>
           </Section>
 
-          <Section title="6. Do Not Track">
-            <p>Some browsers transmit &ldquo;Do Not Track&rdquo; signals. Our website currently does not respond to these signals, but we minimise tracking to analytics that are aggregated and anonymised.</p>
+          <Section title="4. Do Not Track">
+            <p>Some browsers transmit &ldquo;Do Not Track&rdquo; signals. Our website currently does not respond to these signals, but we minimise tracking to anonymised and aggregated analytics only.</p>
           </Section>
 
-          <Section title="7. Updates to This Policy">
-            <p>We may update this Cookie Policy periodically. When we do, we will revise the &ldquo;Effective date&rdquo; at the top. We encourage you to review this policy regularly.</p>
+          <Section title="5. Updates to This Policy">
+            <p>We may update this Cookie Policy periodically. When we do, we will revise the &ldquo;Effective date&rdquo; at the top.</p>
           </Section>
 
-          <Section title="8. Contact">
+          <Section title="6. Contact">
             <p>Questions about our cookie practices?</p>
             <ul className="list-none space-y-1">
               <li>📧 <a href={`mailto:${CONTACT_EMAIL}`} className="text-[#C17B6B] hover:underline">{CONTACT_EMAIL}</a></li>
