@@ -4,6 +4,7 @@ import Navbar              from '@/components/Navbar'
 import HeroSection         from '@/components/HeroSection'
 import MarqueeBand         from '@/components/MarqueeBand'
 import FilmsSection        from '@/components/FilmsSection'
+import CinematicSection    from '@/components/CinematicSection'
 import PriorityCarousel    from '@/components/PriorityCarousel'
 import TimelineSection     from '@/components/TimelineSection'
 import BentoFeatures       from '@/components/BentoFeatures'
@@ -19,6 +20,7 @@ export default function Home() {
       <HeroSection />
       <MarqueeBand />
       <FilmsSection />
+      <CinematicSection />
       <PriorityCarousel />
       <TimelineSection />
       <BentoFeatures />
