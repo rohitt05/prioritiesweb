@@ -13,20 +13,18 @@ const VIDEO_SLOTS = [[0], [3], [1], []]
 
 function getFilmDays() {
   const today = new Date()
+  // today first (i=0), then yesterday, then 2 days ago, then 3 days ago
   return Array.from({ length: 4 }, (_, i) => {
     const d = new Date(today)
-    d.setDate(today.getDate() - (3 - i)) // oldest first: today-3 … today
-    const daysAgo = 3 - i
+    d.setDate(today.getDate() - i)
 
     const date = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toLowerCase()
     const label =
-      daysAgo === 0 ? 'Today'
-      : daysAgo === 1 ? 'Yesterday'
-      : `${daysAgo} days ago`
+      i === 0 ? 'Today'
+      : i === 1 ? 'Yesterday'
+      : `${i} days ago`
 
-    const colors = FILM_COLORS[i]
-    const videos = VIDEO_SLOTS[i]
-    const films = colors.map((c, fi) => ({ c, isVideo: videos.includes(fi) }))
+    const films = FILM_COLORS[i].map((c, fi) => ({ c, isVideo: VIDEO_SLOTS[i].includes(fi) }))
 
     return { date, label, films }
   })
@@ -104,7 +102,6 @@ function FilmDayRow({ day, index }: { day: ReturnType<typeof getFilmDays>[0]; in
 }
 
 export default function FilmsSection() {
-  // useMemo so dates are computed once per mount, not re-derived on every render
   const filmDays = useMemo(() => getFilmDays(), [])
 
   const headerRef = useRef<HTMLDivElement>(null)
@@ -144,7 +141,6 @@ export default function FilmsSection() {
 
         {/* Timeline */}
         <div className="relative">
-          {/* Vertical spine */}
           <div className="absolute left-1/2 -translate-x-px top-0 bottom-0 w-px bg-[rgba(67,61,53,0.08)]">
             <motion.div
               className="absolute top-0 left-0 w-full bg-[#D4A373] origin-top"
