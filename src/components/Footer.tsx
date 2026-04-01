@@ -1,45 +1,70 @@
-'use client'
-import { motion } from 'framer-motion'
+import Link from 'next/link'
 
 export default function Footer() {
+  const year = new Date().getFullYear()
+
   return (
-    <footer className="bg-[#FDFCF0] border-t border-[rgba(67,61,53,0.07)] py-10 sm:py-14 px-5 sm:px-8">
+    <footer className="bg-[#1A1814] text-[#9A9589] py-16 px-5 sm:px-8">
       <div className="max-w-5xl mx-auto">
-        {/* Top row */}
-        <div className="flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
-          {/* Brand */}
-          <div>
-            <span className="text-[22px] font-serif italic font-bold text-[#433D35]">priorities</span>
-            <p className="text-[12px] text-[#A89F8D] mt-1">For the people who matter most.</p>
+
+        {/* Top row: brand + tagline */}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-10 mb-14">
+          <div className="max-w-xs">
+            <span className="font-serif italic text-[28px] font-bold text-[#F5F0E8] block mb-2">priorities</span>
+            <p className="text-sm leading-relaxed text-[#6B6560]">
+              The private social app built for people who actually matter to you.
+              9 people. Real moments. No noise.
+            </p>
           </div>
 
-          {/* Links — horizontal scroll on mobile */}
-          <div className="flex gap-5 sm:gap-8 overflow-x-auto scrollbar-hide text-[12px] sm:text-[13px] text-[#A89F8D]">
-            {['Films', 'Priorities', 'Timeline', 'Waitlist'].map(l => (
-              <a key={l} href={`#${l.toLowerCase()}`}
-                className="hover:text-[#433D35] transition-colors whitespace-nowrap"
-              >{l}</a>
-            ))}
-          </div>
+          {/* Link columns */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 text-sm">
+            {/* Product */}
+            <div>
+              <p className="text-[#F5F0E8] font-semibold mb-3 text-xs tracking-widest uppercase">Product</p>
+              <ul className="space-y-2">
+                <li><a href="/#about" className="hover:text-[#F5F0E8] transition-colors">About</a></li>
+                <li><a href="/#features" className="hover:text-[#F5F0E8] transition-colors">Features</a></li>
+                <li><a href="/#waitlist" className="hover:text-[#F5F0E8] transition-colors">Join Waitlist</a></li>
+              </ul>
+            </div>
 
-          {/* Socials */}
-          <div className="flex gap-2">
-            {['Instagram', 'Twitter'].map(s => (
-              <motion.a key={s} href="#"
-                className="px-3 sm:px-4 py-2 rounded-xl bg-[#F7F4E9] border border-[rgba(67,61,53,0.09)] text-[11px] sm:text-[12px] text-[#7C7267] hover:text-[#433D35] transition-colors"
-                whileHover={{ scale: 1.05, y: -2 }}
-              >{s}</motion.a>
-            ))}
+            {/* Company */}
+            <div>
+              <p className="text-[#F5F0E8] font-semibold mb-3 text-xs tracking-widest uppercase">Company</p>
+              <ul className="space-y-2">
+                <li><a href="mailto:hello@getpriorities.app" className="hover:text-[#F5F0E8] transition-colors">Contact</a></li>
+                <li><a href="mailto:support@getpriorities.app" className="hover:text-[#F5F0E8] transition-colors">Support</a></li>
+                <li><a href="mailto:press@getpriorities.app" className="hover:text-[#F5F0E8] transition-colors">Press</a></li>
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <p className="text-[#F5F0E8] font-semibold mb-3 text-xs tracking-widest uppercase">Legal</p>
+              <ul className="space-y-2">
+                <li><Link href="/privacy" className="hover:text-[#F5F0E8] transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-[#F5F0E8] transition-colors">Terms of Service</Link></li>
+                <li><Link href="/cookies" className="hover:text-[#F5F0E8] transition-colors">Cookie Policy</Link></li>
+              </ul>
+            </div>
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="mt-8 pt-6 border-t border-[rgba(67,61,53,0.05)] flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
-          <p className="text-[11px] text-[#A89F8D]">© 2026 Priorities. All rights reserved.</p>
-          <p className="text-[12px] text-[#A89F8D] font-serif italic">
-            Built with love, for love — by your loverr 🌸
-          </p>
+        {/* Divider */}
+        <div className="border-t border-[#2C2820] mb-8" />
+
+        {/* Bottom row */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-xs text-[#5A554F]">
+          <p>© {year} Priorities. All rights reserved. Made with 🌸 in India.</p>
+          <div className="flex items-center gap-5">
+            <Link href="/privacy" className="hover:text-[#9A9589] transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-[#9A9589] transition-colors">Terms</Link>
+            <Link href="/cookies" className="hover:text-[#9A9589] transition-colors">Cookies</Link>
+            <a href="mailto:hello@getpriorities.app" className="hover:text-[#9A9589] transition-colors">Contact</a>
+          </div>
         </div>
+
       </div>
     </footer>
   )
