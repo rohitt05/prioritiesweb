@@ -53,25 +53,24 @@ export default function Navbar() {
       >
         <motion.div
           animate={{
-            width:        scrolled ? '90%'   : '100%',
-            maxWidth:     scrolled ? '820px' : '1152px',
-            borderRadius: scrolled ? 999 : 0,
-            paddingLeft:  scrolled ? 20 : 32,
-            paddingRight: scrolled ? 20 : 32,
-            paddingTop:   scrolled ? 10 : 14,
-            paddingBottom:scrolled ? 10 : 14,
-            // transparent at top → glassy pill on scroll
-            backgroundColor: scrolled
-              ? 'rgba(253,252,240,0.75)'
-              : 'rgba(253,252,240,0)',
+            width:         scrolled ? '90%'   : '100%',
+            maxWidth:      scrolled ? '820px' : '1152px',
+            borderRadius:  scrolled ? 999 : 0,
+            paddingLeft:   scrolled ? 20 : 32,
+            paddingRight:  scrolled ? 20 : 32,
+            paddingTop:    scrolled ? 10 : 14,
+            paddingBottom: scrolled ? 10 : 14,
+            backgroundColor: scrolled ? 'rgba(253,252,240,0.75)' : 'rgba(0,0,0,0)',
             boxShadow: scrolled
               ? '0 4px 32px rgba(67,61,53,0.10), 0 0 0 1px rgba(67,61,53,0.07)'
               : 'none',
           }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           className="flex items-center justify-between w-full"
-          // keep blur always ready so it kicks in instantly when pill appears
-          style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+          style={{
+            backdropFilter:       scrolled ? 'blur(20px)' : 'none',
+            WebkitBackdropFilter: scrolled ? 'blur(20px)' : 'none',
+          }}
         >
           {/* Logo — letter wave */}
           <motion.a
