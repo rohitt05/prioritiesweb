@@ -63,7 +63,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, scale: 0.88, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ delay: 1.65, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center"
+          className="relative z-20 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center"
         >
           <motion.a href="#waitlist" className="btn-ink text-[13px] sm:text-[14px] justify-center" whileHover={{ scale: 1.05, y: -3 }} whileTap={{ scale: 0.97 }}>
             Join Waitlist <span className="ml-1 opacity-60">↗</span>
@@ -106,10 +106,10 @@ export default function HeroSection() {
         ))}
       </motion.div>
 
-      {/* Scroll line */}
+      {/* Scroll indicator — z-0 so it never overlaps buttons */}
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.6 }}
-        className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+        className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-0 pointer-events-none"
       >
         <span className="label-tag">scroll</span>
         <motion.div
