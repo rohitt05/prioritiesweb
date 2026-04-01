@@ -2,7 +2,7 @@
 import { useRef, useEffect, useState } from 'react'
 import { motion, useScroll, useTransform, useSpring, AnimatePresence, MotionValue } from 'framer-motion'
 
-// ─── App palette ─────────────────────────────────────────────────────────────────
+// ─── App palette ────────────────────────────────────────────────────────────────────────
 const P = [
   '#B8C88D','#E9DFB4','#EFBFB3','#A8E6CF','#DDEDC4',
   '#FFD4B8','#FFADAD','#C9E6EE','#FAD1D8','#F2C4D6',
@@ -20,7 +20,7 @@ const PHOTO_SEEDS = [
   'portrait1','portrait2','portrait3','life1','life2',
 ]
 
-// ─── Per-scene config ─────────────────────────────────────────────────────────────
+// ─── Per-scene config ───────────────────────────────────────────────────────────────────
 const SCENE_BG = [
   { bg: '#F5F0E8', glow: 'rgba(233,223,180,0.60)' },
   { bg: '#EEEAF8', glow: 'rgba(193,174,222,0.55)' },
@@ -70,7 +70,7 @@ const SCENES = [
   },
 ]
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────────────────────────────
 interface Particle {
   id: number
   x: number       // % from left
@@ -105,7 +105,7 @@ function mkParticle(isFilm = false): Particle {
   }
 }
 
-// ─── Single rising particle ─────────────────────────────────────────────────────────
+// ─── Single rising particle ───────────────────────────────────────────────────────────────────────
 function RisingParticle({ p, onDone }: { p: Particle; onDone: (id: number) => void }) {
   const viewH = typeof window !== 'undefined' ? window.innerHeight : 800
   const travel = viewH + p.size + 40  // travel full viewport height + size
@@ -168,7 +168,7 @@ function RisingParticle({ p, onDone }: { p: Particle; onDone: (id: number) => vo
   )
 }
 
-// ─── Scene text panel ─────────────────────────────────────────────────────────────
+// ─── Scene text panel ───────────────────────────────────────────────────────────────────────
 function ScenePanel({
   scene, opacity, y,
 }: {
@@ -214,7 +214,7 @@ function ScenePanel({
 
       <div className="flex items-center gap-3 mb-5" style={{ opacity: 0.4 }}>
         <div className="h-px w-10 sm:w-14" style={{ background: scene.accentColor }} />
-        <span className="text-xs" style={{ color: scene.accentColor }}>✦</span>
+        <span className="text-xs" style={{ color: scene.accentColor }}>✶</span>
         <div className="h-px w-10 sm:w-14" style={{ background: scene.accentColor }} />
       </div>
 
@@ -240,7 +240,7 @@ function ScenePanel({
   )
 }
 
-// ─── Rising bubble pool manager ────────────────────────────────────────────────────────
+// ─── Rising bubble pool manager ─────────────────────────────────────────────────────────────────────────────────
 function RisingPool() {
   const [particles, setParticles] = useState<Particle[]>(() => {
     // Seed initial batch spread across the screen at various heights
@@ -285,7 +285,7 @@ function RisingPool() {
   )
 }
 
-// ─── Main export ────────────────────────────────────────────────────────────────────
+// ─── Main export ────────────────────────────────────────────────────────────────────────────────────
 export default function CinematicSection() {
   const containerRef = useRef<HTMLDivElement>(null)
 
