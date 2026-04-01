@@ -14,41 +14,36 @@ const FACE_SVGS = [
   `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#FDFCF0"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#FDDBB4"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#FDDBB4"/><path d="M19 26 Q18 16 32 15 Q46 16 45 26 Q43 18 32 18 Q21 18 19 26Z" fill="#4A2912"/><circle cx="26" cy="30" r="1.5" fill="#2C1A0E"/><circle cx="38" cy="30" r="1.5" fill="#2C1A0E"/><path d="M27 36 Q32 40 37 36" stroke="#C17B6B" stroke-width="2" stroke-linecap="round" fill="none"/><ellipse cx="24" cy="35" rx="3.5" ry="2" fill="#F4A0A0" opacity="0.45"/><ellipse cx="40" cy="35" rx="3.5" ry="2" fill="#F4A0A0" opacity="0.45"/></svg>`,
 ]
 
-// Base radii at 800px canvas width — scale proportionally
-const BASE_W = 800
+const BASE_W = 900
 const FRIENDS_BASE = [
-  { faceIdx: 0, label: 'the creative one', r: 56 },
-  { faceIdx: 1, label: 'the fun one',       r: 64 },
-  { faceIdx: 2, label: 'the smart one',     r: 50 },
-  { faceIdx: 3, label: 'your ride-or-die',  r: 68 },
-  { faceIdx: 4, label: 'who feeds you',     r: 54 },
-  { faceIdx: 5, label: 'your rock',         r: 62 },
-  { faceIdx: 1, label: 'the dreamer',       r: 48 },
-  { faceIdx: 0, label: 'the wise one',      r: 58 },
-  { faceIdx: 2, label: 'your person',       r: 52 },
+  { faceIdx: 0, label: 'the creative one', r: 58 },
+  { faceIdx: 1, label: 'the fun one',       r: 66 },
+  { faceIdx: 2, label: 'the smart one',     r: 52 },
+  { faceIdx: 3, label: 'your ride-or-die',  r: 70 },
+  { faceIdx: 4, label: 'who feeds you',     r: 56 },
+  { faceIdx: 5, label: 'your rock',         r: 64 },
+  { faceIdx: 1, label: 'the dreamer',       r: 50 },
+  { faceIdx: 0, label: 'the wise one',      r: 60 },
+  { faceIdx: 2, label: 'your person',       r: 54 },
 ]
-const YOU_BASE = { faceIdx: 6, label: 'you', r: 70 }
+const YOU_BASE = { faceIdx: 6, label: 'you', r: 74 }
 
-const CANVAS_H = 420
-
-function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
-  const canvasRef  = useRef<HTMLCanvasElement>(null)
-  const startedRef = useRef(false)
-  const rafRef     = useRef<number>(0)
+function PhysicsStage({ trigger, width, height }: { trigger: boolean; width: number; height: number }) {
+  const canvasRef   = useRef<HTMLCanvasElement>(null)
+  const startedRef  = useRef(false)
+  const rafRef      = useRef<number>(0)
   const draggingRef = useRef(false)
 
   useEffect(() => {
-    if (!trigger || startedRef.current || width === 0) return
+    if (!trigger || startedRef.current || width === 0 || height === 0) return
     startedRef.current = true
 
     const canvas = canvasRef.current
     if (!canvas) return
 
-    // Scale factor based on actual width
-    const scale = Math.max(0.45, Math.min(1.2, width / BASE_W))
-
+    const scale = Math.max(0.38, Math.min(1.15, width / BASE_W))
     const W = width
-    const H = CANVAS_H
+    const H = height
     canvas.width  = W
     canvas.height = H
 
@@ -61,30 +56,30 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
 
     const ALL_DATA = [
       ...FRIENDS_BASE.map(d => ({ ...d, r: Math.round(d.r * scale) })),
-      { ...YOU_BASE,   r: Math.round(YOU_BASE.r * scale) },
+      { ...YOU_BASE, r: Math.round(YOU_BASE.r * scale) },
     ]
-    const FRIENDS_COUNT = FRIENDS_BASE.length
 
     import('matter-js').then((M) => {
-      const { Engine, Runner, Bodies, Composite, Body, Events, Mouse, MouseConstraint } = M
-      const engine = Engine.create({ gravity: { y: 2.2 } })
+      const { Engine, Runner, Bodies, Composite, Events, Mouse, MouseConstraint } = M
+      const engine = Engine.create({ gravity: { y: 2.5 } })
 
-      const wo = { isStatic: true, render: { visible: false }, friction: 0.4, restitution: 0.2 }
-      // walls: floor + left + right — NO ceiling wall so avatars can fly up freely
+      const wo = { isStatic: true, render: { visible: false }, friction: 0.4, restitution: 0.25 }
       Composite.add(engine.world, [
-        Bodies.rectangle(W / 2, H + 25,  W + 200, 50,    wo),
-        Bodies.rectangle(-25,   H / 2,   50, H * 4,      wo),
-        Bodies.rectangle(W + 25, H / 2,  50, H * 4,      wo),
+        Bodies.rectangle(W / 2,  H + 25,   W + 200, 50,   wo), // floor
+        Bodies.rectangle(-25,    H / 2,    50, H * 4,     wo), // left wall
+        Bodies.rectangle(W + 25, H / 2,    50, H * 4,     wo), // right wall
+        // NO ceiling — avatars can fly all the way up
       ])
 
+      const FRIENDS_COUNT = FRIENDS_BASE.length
       const bodies = ALL_DATA.map((d, i) => {
         const isYou = i === ALL_DATA.length - 1
         const xPos  = isYou
           ? W / 2
-          : d.r + (i / (FRIENDS_COUNT - 1)) * (W - d.r * 2)
-        const startY = -(i * 120 * scale + d.r + 160)
+          : d.r * 1.1 + (i / (FRIENDS_COUNT - 1)) * (W - d.r * 2.2)
+        const startY = -(i * 130 * scale + d.r + 200)
         const body = Bodies.circle(xPos, startY, d.r, {
-          restitution: 0.3, friction: 0.5, frictionAir: 0.01, density: 0.004,
+          restitution: 0.32, friction: 0.45, frictionAir: 0.009, density: 0.004,
           render: { visible: false },
         })
         ;(body as any).__faceIdx = d.faceIdx
@@ -95,21 +90,18 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
       })
       Composite.add(engine.world, bodies)
 
-      // Mouse: attach to canvas, remove wheel listener immediately
       const mouse = Mouse.create(canvas)
       const mouseEl = (mouse as any).element as HTMLElement
-      const noop = () => {}
       mouseEl.removeEventListener('wheel',      (mouse as any).mousewheel)
       mouseEl.removeEventListener('mousewheel', (mouse as any).mousewheel)
-      mouseEl.addEventListener('wheel',         noop, { passive: true })
+      mouseEl.addEventListener('wheel', () => {}, { passive: true })
 
       const mc = MouseConstraint.create(engine, {
         mouse,
-        constraint: { stiffness: 0.25, damping: 0.1, render: { visible: false } },
+        constraint: { stiffness: 0.22, damping: 0.08, render: { visible: false } },
       })
       Composite.add(engine.world, mc)
 
-      // Track whether user is actively dragging to gate scroll block
       Events.on(mc, 'startdrag', () => { draggingRef.current = true })
       Events.on(mc, 'enddrag',   () => { draggingRef.current = false })
 
@@ -117,30 +109,9 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
 
       const ctx = canvas.getContext('2d')!
 
-      function drawTextOverlay() {
-        // "me and my 9 idiots" heading
-        const titleSize = Math.max(14, Math.round(28 * scale))
-        ctx.save()
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'top'
-        // main text
-        ctx.font = `700 ${titleSize}px Georgia,serif`
-        ctx.fillStyle = 'rgba(245,240,232,0.08)'
-        ctx.fillText('me and my 9 idiots', W / 2, 22)
-        // sub text
-        const subSize = Math.max(10, Math.round(11 * scale))
-        ctx.font = `400 ${subSize}px Inter,sans-serif`
-        ctx.fillStyle = 'rgba(245,240,232,0.04)'
-        ctx.letterSpacing = '0.12em'
-        ctx.fillText('YOUR WHOLE WORLD, IN ONE APP', W / 2, 22 + titleSize + 6)
-        ctx.restore()
-      }
-
       function draw() {
         rafRef.current = requestAnimationFrame(draw)
         ctx.clearRect(0, 0, W, H)
-
-        drawTextOverlay()
 
         Composite.allBodies(engine.world).forEach((body: any) => {
           if (body.isStatic) return
@@ -151,19 +122,23 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
           const isYou: boolean = body.__isYou
           if (r === undefined) return
 
+          // face
           ctx.save()
           ctx.translate(x, y); ctx.rotate(body.angle)
           ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.clip()
           if (imgs[fi]?.complete && imgs[fi].naturalWidth > 0) {
             ctx.drawImage(imgs[fi], -r, -r, r * 2, r * 2)
-          } else { ctx.fillStyle = '#2a2824'; ctx.fill() }
+          } else {
+            ctx.fillStyle = '#2a2824'; ctx.fill()
+          }
           ctx.restore()
 
+          // ring
           ctx.save(); ctx.translate(x, y)
           if (isYou) {
-            ctx.beginPath(); ctx.arc(0, 0, r + 10 * scale, 0, Math.PI * 2)
-            ctx.strokeStyle = 'rgba(212,163,115,0.18)'; ctx.lineWidth = 16 * scale; ctx.stroke()
-            ctx.beginPath(); ctx.arc(0, 0, r + 3,  0, Math.PI * 2)
+            ctx.beginPath(); ctx.arc(0, 0, r + Math.max(6, 10 * scale), 0, Math.PI * 2)
+            ctx.strokeStyle = 'rgba(212,163,115,0.18)'; ctx.lineWidth = Math.max(8, 16 * scale); ctx.stroke()
+            ctx.beginPath(); ctx.arc(0, 0, r + 3, 0, Math.PI * 2)
             ctx.strokeStyle = '#D4A373'; ctx.lineWidth = 3; ctx.stroke()
           } else {
             ctx.beginPath(); ctx.arc(0, 0, r + 1.5, 0, Math.PI * 2)
@@ -171,10 +146,11 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
           }
           ctx.restore()
 
-          const labelSize = Math.max(8, Math.round(r * 0.20))
+          // label
+          const labelSize = Math.max(8, Math.round(r * 0.21))
           ctx.save(); ctx.translate(x, y)
           ctx.font = `${isYou ? 700 : 500} ${labelSize}px Inter,sans-serif`
-          ctx.fillStyle = isYou ? '#C17B6B' : 'rgba(80,74,68,0.9)'
+          ctx.fillStyle = isYou ? '#C17B6B' : 'rgba(80,74,68,0.85)'
           ctx.textAlign = 'center'; ctx.textBaseline = 'top'
           ctx.fillText(isYou ? 'YOU' : label, 0, r + 5)
           ctx.restore()
@@ -182,20 +158,10 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
       }
       draw()
 
-      return () => { cancelAnimationFrame(rafRef.current) }
+      return () => cancelAnimationFrame(rafRef.current)
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trigger, width])
-
-  // Block scroll only while actively dragging an avatar
-  useEffect(() => {
-    const onWheel = (e: WheelEvent) => {
-      if (draggingRef.current) e.stopPropagation()
-    }
-    const canvas = canvasRef.current
-    canvas?.addEventListener('wheel', onWheel, { passive: true })
-    return () => canvas?.removeEventListener('wheel', onWheel)
-  }, [])
+  }, [trigger, width, height])
 
   return (
     <canvas
@@ -203,10 +169,10 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
       style={{
         display: 'block',
         width: '100%',
-        height: CANVAS_H,
+        height: '100%',
         background: 'transparent',
         cursor: 'grab',
-        touchAction: 'pan-y', // allow vertical scroll touch; horizontal handled by matter
+        touchAction: 'pan-y',
       }}
     />
   )
@@ -214,11 +180,14 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
 
 function AnimatedBlock({ inView }: { inView: boolean }) {
   const blockRef = useRef<HTMLDivElement>(null)
-  const [width, setWidth] = useState(0)
+  const [dims, setDims] = useState({ width: 0, height: 0 })
 
   useEffect(() => {
     if (!blockRef.current) return
-    const update = () => setWidth(blockRef.current!.offsetWidth)
+    const update = () => {
+      if (!blockRef.current) return
+      setDims({ width: blockRef.current.offsetWidth, height: blockRef.current.offsetHeight })
+    }
     update()
     const ro = new ResizeObserver(update)
     ro.observe(blockRef.current)
@@ -228,9 +197,60 @@ function AnimatedBlock({ inView }: { inView: boolean }) {
   return (
     <div
       ref={blockRef}
-      style={{ width: '100%', height: CANVAS_H, background: '#0e0d0b', overflow: 'hidden', position: 'relative' }}
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100vh',
+        background: '#0e0d0b',
+        overflow: 'hidden',
+      }}
     >
-      <PhysicsStage trigger={inView} width={width} />
+      {/* Text overlay — sits behind avatars via z-index */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          pointerEvents: 'none',
+          zIndex: 1,
+          userSelect: 'none',
+        }}
+      >
+        <p style={{
+          fontFamily: '"Playfair Display", Georgia, serif',
+          fontStyle: 'italic',
+          fontWeight: 700,
+          fontSize: 'clamp(28px, 5vw, 72px)',
+          color: 'rgba(245, 240, 232, 0.07)',
+          lineHeight: 1.15,
+          textAlign: 'center',
+          letterSpacing: '-0.01em',
+          margin: 0,
+        }}>
+          me and my{' '}
+          <span style={{ color: 'rgba(193, 123, 107, 0.10)' }}>9 idiots</span>
+        </p>
+        <p style={{
+          fontFamily: 'Inter, sans-serif',
+          fontWeight: 400,
+          fontSize: 'clamp(10px, 1.1vw, 13px)',
+          color: 'rgba(245, 240, 232, 0.03)',
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          marginTop: '10px',
+          textAlign: 'center',
+        }}>
+          your whole world, in one app
+        </p>
+      </div>
+
+      {/* Physics canvas on top */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
+        <PhysicsStage trigger={inView} width={dims.width} height={dims.height} />
+      </div>
     </div>
   )
 }
@@ -238,7 +258,7 @@ function AnimatedBlock({ inView }: { inView: boolean }) {
 export default function Footer() {
   const year       = new Date().getFullYear()
   const sectionRef = useRef(null)
-  const inView     = useInView(sectionRef, { once: true, margin: '0px 0px -60px 0px' })
+  const inView     = useInView(sectionRef, { once: true, margin: '0px 0px -100px 0px' })
 
   return (
     <footer ref={sectionRef} className="bg-[#0e0d0b] text-[#9A9589] overflow-hidden">
@@ -250,7 +270,7 @@ export default function Footer() {
           {/* brand */}
           <div className="max-w-[220px]">
             <span className="font-serif italic text-[26px] font-bold text-[#F5F0E8] block mb-2">priorities</span>
-            <p className="text-xs leading-relaxed text-[#4A4540] mb-4">9 people. Real moments. No noise.</p>
+            <p className="text-xs leading-relaxed text-[#4A4540]">9 people. Real moments. No noise.</p>
           </div>
 
           {/* links */}
@@ -294,7 +314,7 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* physics canvas with text overlay */}
+      {/* Full-viewport physics section */}
       <AnimatedBlock inView={inView} />
 
     </footer>
