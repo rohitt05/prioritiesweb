@@ -181,58 +181,72 @@ export default function Footer() {
   return (
     <footer ref={sectionRef} className="bg-[#0e0d0b] text-[#9A9589] overflow-hidden">
 
-      {/* top: brand + links + copyright */}
-      <div className="max-w-5xl mx-auto px-5 sm:px-8 pt-14 pb-10">
+      {/* top: brand + links */}
+      <div className="max-w-5xl mx-auto px-5 sm:px-8 pt-14 pb-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-10">
 
           {/* brand */}
           <div className="max-w-[220px]">
             <span className="font-serif italic text-[26px] font-bold text-[#F5F0E8] block mb-2">priorities</span>
-            <p className="text-xs leading-relaxed text-[#4A4540] mb-3">9 people. Real moments. No noise.</p>
-            <p style={{ fontFamily: 'Georgia,serif', fontStyle: 'italic', fontSize: '13px', color: '#3A3530', lineHeight: 1.55 }}>
-              built with love,<br />
-              <span style={{ color: '#6B4035' }}>for love —</span><br />
-              by your lover 🌸
+            <p className="text-xs leading-relaxed text-[#4A4540] mb-4">9 people. Real moments. No noise.</p>
+            {/* me and my 9 idiots */}
+            <p style={{
+              fontFamily: 'Georgia,serif',
+              fontStyle: 'italic',
+              fontSize: '13px',
+              color: '#3A3530',
+              lineHeight: 1.6,
+              letterSpacing: '0.01em',
+            }}>
+              me and my{' '}
+              <span style={{ color: '#6B4035', fontWeight: 600 }}>9 idiots</span>
+              <span style={{ display: 'block', fontSize: '11px', color: '#2E2C29', marginTop: '4px', fontStyle: 'normal', letterSpacing: '0.08em', textTransform: 'uppercase' }}>your whole world, in one app</span>
             </p>
           </div>
 
-          {/* links + copyright */}
-          <div className="flex flex-col gap-6 flex-1 items-end">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 text-sm w-full sm:w-auto">
-              <div>
-                <p className="text-[#F5F0E8] font-semibold mb-4 text-xs tracking-widest uppercase">Product</p>
-                <ul className="space-y-3">
-                  <li><a href="/#about"    className="hover:text-[#F5F0E8] transition-colors">About</a></li>
-                  <li><a href="/#features" className="hover:text-[#F5F0E8] transition-colors">Features</a></li>
-                  <li><a href="/#waitlist" className="hover:text-[#F5F0E8] transition-colors">Join Waitlist</a></li>
-                </ul>
-              </div>
-              <div>
-                <p className="text-[#F5F0E8] font-semibold mb-4 text-xs tracking-widest uppercase">Company</p>
-                <ul className="space-y-3">
-                  <li><a href="mailto:hello@getpriorities.app"   className="hover:text-[#F5F0E8] transition-colors">Contact</a></li>
-                  <li><a href="mailto:support@getpriorities.app" className="hover:text-[#F5F0E8] transition-colors">Support</a></li>
-                  <li><a href="mailto:careers@getpriorities.app" className="hover:text-[#F5F0E8] transition-colors">Join Us</a></li>
-                </ul>
-              </div>
-              <div>
-                <p className="text-[#F5F0E8] font-semibold mb-4 text-xs tracking-widest uppercase">Legal</p>
-                <ul className="space-y-3">
-                  <li><Link href="/privacy" className="hover:text-[#F5F0E8] transition-colors">Privacy Policy</Link></li>
-                  <li><Link href="/terms"   className="hover:text-[#F5F0E8] transition-colors">Terms of Service</Link></li>
-                  <li><Link href="/cookies" className="hover:text-[#F5F0E8] transition-colors">Cookie Policy</Link></li>
-                </ul>
-              </div>
+          {/* links */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 text-sm">
+            <div>
+              <p className="text-[#F5F0E8] font-semibold mb-4 text-xs tracking-widest uppercase">Product</p>
+              <ul className="space-y-3">
+                <li><a href="/#about"    className="hover:text-[#F5F0E8] transition-colors">About</a></li>
+                <li><a href="/#features" className="hover:text-[#F5F0E8] transition-colors">Features</a></li>
+                <li><a href="/#waitlist" className="hover:text-[#F5F0E8] transition-colors">Join Waitlist</a></li>
+              </ul>
             </div>
-            <p className="text-xs text-[#2E2C29] text-right w-full">
-              © {year} Priorities. All rights reserved. Made with 🌸 in India.
-            </p>
+            <div>
+              <p className="text-[#F5F0E8] font-semibold mb-4 text-xs tracking-widest uppercase">Company</p>
+              <ul className="space-y-3">
+                <li><a href="mailto:hello@getpriorities.app"   className="hover:text-[#F5F0E8] transition-colors">Contact</a></li>
+                <li><a href="mailto:support@getpriorities.app" className="hover:text-[#F5F0E8] transition-colors">Support</a></li>
+                <li><a href="mailto:careers@getpriorities.app" className="hover:text-[#F5F0E8] transition-colors">Join Us</a></li>
+              </ul>
+            </div>
+            <div>
+              <p className="text-[#F5F0E8] font-semibold mb-4 text-xs tracking-widest uppercase">Legal</p>
+              <ul className="space-y-3">
+                <li><Link href="/privacy" className="hover:text-[#F5F0E8] transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/terms"   className="hover:text-[#F5F0E8] transition-colors">Terms of Service</Link></li>
+                <li><Link href="/cookies" className="hover:text-[#F5F0E8] transition-colors">Cookie Policy</Link></li>
+              </ul>
+            </div>
           </div>
 
         </div>
+
+        {/* bottom bar: tagline left — copyright right */}
+        <div className="mt-10 pt-6 border-t border-[#1c1b19] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <p style={{ fontFamily: 'Georgia,serif', fontStyle: 'italic', fontSize: '12px', color: '#3A3530', lineHeight: 1.55 }}>
+            built with love, <span style={{ color: '#6B4035' }}>for love —</span> by your lover 🌸
+          </p>
+          <p className="text-xs text-[#2E2C29]">
+            © {year} Priorities. All rights reserved. Made with 🌸 in India.
+          </p>
+        </div>
+
       </div>
 
-      {/* physics — pure canvas, no text */}
+      {/* physics — pure canvas */}
       <AnimatedBlock inView={inView} />
 
     </footer>
