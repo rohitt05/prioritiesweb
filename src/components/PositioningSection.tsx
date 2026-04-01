@@ -1,278 +1,434 @@
 'use client'
-import { useRef, useEffect, useState } from 'react'
-import { motion, useInView, AnimatePresence } from 'framer-motion'
+import { useRef } from 'react'
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useSpring,
+  useMotionValue,
+  useInView,
+} from 'framer-motion'
 
 // ─── Palette ─────────────────────────────────────────────────────────────────
-const P = [
-  '#B8C88D','#E9DFB4','#EFBFB3','#A8E6CF','#DDEDC4',
-  '#FFD4B8','#FFADAD','#C9E6EE','#FAD1D8','#F2C4D6',
-  '#DBC0E7','#F0B2C7','#F0C7DB','#b6e3f4','#c0aede',
-  '#ffdfbf','#d1d4f9','#ffd5dc','#f8c8dc','#a8d8ea',
-  '#e0bbe4','#fec8d8','#d291bc','#fff2cc','#b9fbc0',
-  '#ffc6ff','#fdffb6','#bdb2ff','#a0c4ff','#caffbf',
-  '#9bf6ff','#ffc8dd','#d0f4de','#e4c1f9',
+const CARD_THEMES = [
+  // card 0 — intro
+  { bg: '#F5F0E8', cardBg: 'rgba(255,255,255,0.72)', accent: '#83934D', text: '#2C2416', muted: '#7A6E5F', glow: 'rgba(184,200,141,0.35)' },
+  // card 1 — not for: follower count + highlight reel
+  { bg: '#FFF0F2', cardBg: 'rgba(255,240,242,0.80)', accent: '#C45C7A', text: '#3A1828', muted: '#8A5868', glow: 'rgba(255,173,173,0.40)' },
+  // card 2 — not for: notifications + looking good
+  { bg: '#FFF4EE', cardBg: 'rgba(255,244,238,0.80)', accent: '#C47A3A', text: '#2C1A0A', muted: '#8A6A4A', glow: 'rgba(255,212,184,0.40)' },
+  // card 3 — not for: viral + who viewed
+  { bg: '#F0F4FF', cardBg: 'rgba(240,244,255,0.80)', accent: '#5B6BB5', text: '#1A2040', muted: '#5A6080', glow: 'rgba(193,198,249,0.40)' },
+  // card 4 — divider: but it is for this
+  { bg: '#EDF5F0', cardBg: 'rgba(237,245,240,0.85)', accent: '#44562F', text: '#1A2C18', muted: '#4A7060', glow: 'rgba(168,230,207,0.45)' },
+  // card 5 — for: 2am text + photo
+  { bg: '#F5EBF8', cardBg: 'rgba(245,235,248,0.80)', accent: '#7B5EA7', text: '#2A1840', muted: '#6A4A80', glow: 'rgba(219,192,231,0.45)' },
+  // card 6 — for: voice note + small moment
+  { bg: '#EBF5F8', cardBg: 'rgba(235,245,248,0.80)', accent: '#3A7A8A', text: '#0A2830', muted: '#3A6A78', glow: 'rgba(168,216,234,0.45)' },
+  // card 7 — for: space for you two
+  { bg: '#FFF0F5', cardBg: 'rgba(255,240,245,0.85)', accent: '#C45C8A', text: '#3A1828', muted: '#8A4A68', glow: 'rgba(240,178,199,0.45)' },
+  // card 8 — manifesto quote (final)
+  { bg: '#F5F0E8', cardBg: 'rgba(255,255,255,0.90)', accent: '#83934D', text: '#2C2416', muted: '#7A6E5F', glow: 'rgba(184,200,141,0.35)' },
 ]
 
-const PHOTO_SEEDS = [
-  'couple1','couple2','friend1','friend2','memory1',
-  'life1','life2','moment1','moment2','portrait1',
+// ─── Deco bubbles (static, few, tasteful) ────────────────────────────────────
+const DECO = [
+  { x: '8%',  y: '12%', size: 52, color: '#FAD1D8', opacity: 0.45, dur: 7  },
+  { x: '88%', y: '8%',  size: 34, color: '#DBC0E7', opacity: 0.40, dur: 9  },
+  { x: '5%',  y: '55%', size: 28, color: '#C9E6EE', opacity: 0.38, dur: 11 },
+  { x: '92%', y: '48%', size: 44, color: '#B8C88D', opacity: 0.35, dur: 8  },
+  { x: '15%', y: '88%', size: 22, color: '#FFD4B8', opacity: 0.40, dur: 10 },
+  { x: '80%', y: '82%', size: 36, color: '#F2C4D6', opacity: 0.38, dur: 7  },
+  { x: '50%', y: '5%',  size: 18, color: '#A8E6CF', opacity: 0.35, dur: 12 },
+  { x: '72%', y: '30%', size: 14, color: '#d1d4f9', opacity: 0.42, dur: 6  },
 ]
 
-// ─── Content ─────────────────────────────────────────────────────────────────
-const notForPills = [
-  { icon: '🌍', line: 'Your follower count' },
-  { icon: '📢', line: 'The highlight reel' },
-  { icon: '🔔', line: 'Notifications from strangers' },
-  { icon: '🤳', line: 'Looking good for the internet' },
-  { icon: '📈', line: 'Going viral' },
-  { icon: '👀', line: 'Who viewed your story' },
+// ─── Card data ────────────────────────────────────────────────────────────────
+const CARDS = [
+  {
+    type: 'intro' as const,
+    label: "Let's be honest",
+    heading: 'This app is not for everyone.',
+    sub: "And that's the whole point.",
+  },
+  {
+    type: 'notfor' as const,
+    items: [
+      { icon: '🌍', line: 'Your follower count' },
+      { icon: '📢', line: 'The highlight reel' },
+    ],
+  },
+  {
+    type: 'notfor' as const,
+    items: [
+      { icon: '🔔', line: 'Notifications from strangers' },
+      { icon: '🤳', line: 'Looking good for the internet' },
+    ],
+  },
+  {
+    type: 'notfor' as const,
+    items: [
+      { icon: '📈', line: 'Going viral' },
+      { icon: '👀', line: 'Who viewed your story' },
+    ],
+  },
+  {
+    type: 'divider' as const,
+    text: 'but it is for this.',
+  },
+  {
+    type: 'for' as const,
+    items: [
+      { emoji: '🫀', text: 'The 2am text you actually mean' },
+      { emoji: '📸', text: 'The photo you only send to one person' },
+    ],
+  },
+  {
+    type: 'for' as const,
+    items: [
+      { emoji: '🎙️', text: 'A voice note that sounds like a hug' },
+      { emoji: '🗓️', text: 'Every small moment that becomes a memory' },
+    ],
+  },
+  {
+    type: 'for' as const,
+    items: [
+      { emoji: '🔒', text: 'A space that belongs only to you two' },
+    ],
+  },
+  {
+    type: 'manifesto' as const,
+  },
 ]
 
-const forLines = [
-  { emoji: '🫀', text: 'The 2am text you actually mean' },
-  { emoji: '📸', text: 'The photo you only send to one person' },
-  { emoji: '🎙️', text: 'A voice note that sounds like a hug' },
-  { emoji: '🗓️', text: 'Every small moment that becomes a memory' },
-  { emoji: '🔒', text: 'A space that belongs only to you two' },
-]
+// ─── Single stacked card ──────────────────────────────────────────────────────
+function StackCard({
+  index,
+  total,
+  progress,
+  theme,
+  card,
+}: {
+  index: number
+  total: number
+  progress: ReturnType<typeof useSpring>
+  theme: typeof CARD_THEMES[0]
+  card: typeof CARDS[0]
+}) {
+  const start  = index / total
+  const arrive = start + 0.5 / total        // card fully visible
+  const stay   = (index + 1) / total        // next card starts covering
+  const leave  = stay + 0.3 / total
 
-// ─── Rising bubble types ──────────────────────────────────────────────────────
-interface Particle {
-  id: number
-  x: number
-  size: number
-  color: string
-  duration: number
-  wobble: number
-  isFilm: boolean
-  seed?: string
-  opacity: number
-}
+  // Slide up from below
+  const y = useTransform(
+    progress,
+    [start, arrive],
+    ['60px', '0px']
+  )
+  const entryOpacity = useTransform(
+    progress,
+    [start, arrive],
+    [0, 1]
+  )
+  // Scale down + push back as cards stack on top
+  const scale = useTransform(
+    progress,
+    [stay, leave],
+    [1, 0.94]
+  )
+  const stackY = useTransform(
+    progress,
+    [stay, leave],
+    ['0px', '-18px']
+  )
+  const exitOpacity = useTransform(
+    progress,
+    [leave, leave + 0.05 / total],
+    [1, 0]
+  )
 
-let _uid = 0
-function mkParticle(isFilm = false): Particle {
-  const size = isFilm ? 55 + Math.random() * 75 : 10 + Math.random() * 52
-  return {
-    id:       ++_uid,
-    x:        4 + Math.random() * 92,
-    size,
-    color:    P[Math.floor(Math.random() * P.length)],
-    duration: isFilm ? 16 + Math.random() * 10 : 9 + Math.random() * 10,
-    wobble:   18 + Math.random() * 38,
-    isFilm,
-    seed:     isFilm ? PHOTO_SEEDS[Math.floor(Math.random() * PHOTO_SEEDS.length)] : undefined,
-    opacity:  isFilm ? 0.70 + Math.random() * 0.20 : 0.38 + Math.random() * 0.28,
-  }
-}
+  // Combine opacities
+  const opacity = useTransform(
+    [entryOpacity, exitOpacity] as const,
+    ([e, x]: number[]) => Math.min(e, x)
+  )
 
-function RisingParticle({ p, onDone }: { p: Particle; onDone: (id: number) => void }) {
-  const viewH = typeof window !== 'undefined' ? window.innerHeight : 800
-  const travel = viewH + p.size + 40
   return (
     <motion.div
-      className="absolute pointer-events-none"
-      style={{ left: `${p.x}%`, bottom: -p.size - 20, width: p.size, height: p.size, borderRadius: '50%' }}
-      initial={{ y: 0, x: 0, opacity: 0, scale: 0.6 }}
-      animate={{
-        y:       [0, -travel],
-        x:       [0, p.wobble, -p.wobble * 0.6, p.wobble * 0.4, 0],
-        opacity: [0, p.opacity, p.opacity, p.opacity * 0.5, 0],
-        scale:   [0.6, 1, 1, 0.9],
+      className="absolute inset-x-0 mx-auto w-full max-w-lg px-4"
+      style={{
+        y: useTransform([y, stackY] as const, ([a, b]: string[]) => `calc(${a} + ${b})`),
+        scale,
+        opacity,
+        zIndex: index + 1,
+        transformOrigin: 'top center',
       }}
-      transition={{
-        duration: p.duration,
-        ease: 'easeInOut',
-        times: [0, 0.08, 0.70, 0.88, 1],
-        x: { duration: p.duration, ease: 'easeInOut', times: [0, 0.25, 0.5, 0.75, 1] },
-      }}
-      onAnimationComplete={() => onDone(p.id)}
     >
-      {p.isFilm ? (
-        <div className="w-full h-full rounded-full overflow-hidden"
-          style={{ boxShadow: '0 2px 0 2px rgba(255,255,255,0.5), 0 6px 24px rgba(0,0,0,0.08)' }}>
-          <img src={`https://picsum.photos/seed/${p.seed}/220/220`} alt=""
-            width={p.size} height={p.size} className="w-full h-full object-cover" loading="lazy" draggable={false} />
-          <div className="absolute inset-0 rounded-full" style={{ boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.35)' }} />
-        </div>
-      ) : (
-        <div className="w-full h-full rounded-full" style={{ background: p.color }} />
-      )}
+      <div
+        className="rounded-3xl overflow-hidden w-full"
+        style={{
+          background: theme.cardBg,
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.75)',
+          boxShadow: `0 12px 48px ${theme.glow}, 0 2px 0 rgba(255,255,255,0.9) inset`,
+          minHeight: 220,
+        }}
+      >
+        <CardContent card={card} theme={theme} />
+      </div>
     </motion.div>
   )
 }
 
-function RisingPool() {
-  const [particles, setParticles] = useState<Particle[]>(() => {
-    const init: Particle[] = []
-    for (let i = 0; i < 16; i++) init.push(mkParticle(i % 7 === 0))
-    return init
-  })
+// ─── Card content switcher ────────────────────────────────────────────────────
+function CardContent({
+  card,
+  theme,
+}: {
+  card: typeof CARDS[0]
+  theme: typeof CARD_THEMES[0]
+}) {
+  if (card.type === 'intro') {
+    const c = card as Extract<typeof CARDS[0], { type: 'intro' }>
+    return (
+      <div className="flex flex-col items-center justify-center text-center px-8 py-12 gap-3">
+        <span
+          className="text-[10px] font-bold tracking-[0.2em] uppercase px-3 py-1 rounded-full"
+          style={{ color: theme.accent, background: theme.accent + '18', border: `1px solid ${theme.accent}30` }}
+        >
+          {c.label}
+        </span>
+        <h2
+          className="font-serif font-bold leading-[1.05] tracking-tight"
+          style={{ fontSize: 'clamp(26px,5vw,42px)', color: theme.text }}
+        >
+          {c.heading}
+        </h2>
+        <p style={{ color: theme.muted, fontSize: 15 }}>{c.sub}</p>
+      </div>
+    )
+  }
 
-  useEffect(() => {
-    const bTimer = setInterval(() => setParticles(p => [...p, mkParticle(false)]), 1000)
-    const fTimer = setInterval(() => setParticles(p => [...p, mkParticle(true)]),  3800)
-    return () => { clearInterval(bTimer); clearInterval(fTimer) }
-  }, [])
+  if (card.type === 'notfor') {
+    const c = card as Extract<typeof CARDS[0], { type: 'notfor' }>
+    return (
+      <div className="flex flex-col items-center justify-center px-8 py-10 gap-5">
+        {c.items.map((item, i) => (
+          <div key={i} className="flex items-center gap-4 w-full justify-center">
+            <span className="text-3xl">{item.icon}</span>
+            <span
+              className="font-serif italic text-[18px] sm:text-[22px] line-through"
+              style={{ color: theme.muted, textDecorationColor: theme.accent + '80' }}
+            >
+              {item.line}
+            </span>
+          </div>
+        ))}
+      </div>
+    )
+  }
 
-  const remove = (id: number) => setParticles(p => p.filter(x => x.id !== id))
+  if (card.type === 'divider') {
+    const c = card as Extract<typeof CARDS[0], { type: 'divider' }>
+    return (
+      <div className="flex flex-col items-center justify-center px-8 py-12 gap-4">
+        <div className="flex items-center gap-4 w-full">
+          <div className="flex-1 h-px" style={{ background: theme.accent + '40' }} />
+          <span
+            className="font-serif italic text-[22px] sm:text-[28px] font-bold"
+            style={{ color: theme.accent }}
+          >
+            {c.text}
+          </span>
+          <div className="flex-1 h-px" style={{ background: theme.accent + '40' }} />
+        </div>
+        <p className="text-[12px] tracking-widest uppercase" style={{ color: theme.muted, opacity: 0.7 }}>
+          swipe to see what it’s actually for
+        </p>
+      </div>
+    )
+  }
 
+  if (card.type === 'for') {
+    const c = card as Extract<typeof CARDS[0], { type: 'for' }>
+    return (
+      <div className="flex flex-col items-center justify-center px-8 py-10 gap-6">
+        {c.items.map((item, i) => (
+          <div key={i} className="flex items-center gap-4 w-full justify-center">
+            <span className="text-3xl">{item.emoji}</span>
+            <span
+              className="font-serif italic text-[18px] sm:text-[22px]"
+              style={{ color: theme.text }}
+            >
+              {item.text}
+            </span>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  // manifesto
   return (
-    <div className="absolute inset-0 z-[1] pointer-events-none overflow-hidden">
-      <AnimatePresence>
-        {particles.map(p => <RisingParticle key={p.id} p={p} onDone={remove} />)}
-      </AnimatePresence>
+    <div className="flex flex-col items-center justify-center px-8 sm:px-12 py-12 gap-2 text-center">
+      <span
+        className="font-serif text-[56px] leading-none select-none"
+        style={{ color: theme.accent, opacity: 0.4, lineHeight: 0.7 }}
+      >&ldquo;</span>
+      <p
+        className="font-serif leading-[1.55] tracking-tight"
+        style={{ fontSize: 'clamp(17px,3.2vw,26px)', color: theme.text }}
+      >
+        The world has a million apps<br />
+        <em className="not-italic" style={{ color: theme.accent }}>for everyone.</em><br />
+        <span style={{ opacity: 0.6 }}>We made one</span><br />
+        for{' '}<em style={{ color: theme.accent }} className="font-bold">the one.</em>
+      </p>
+      <span
+        className="font-serif text-[56px] leading-none select-none"
+        style={{ color: theme.accent, opacity: 0.4, lineHeight: 0.7 }}
+      >&rdquo;</span>
+      <div className="mt-3 flex items-center gap-2">
+        <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: theme.accent }} />
+        <span className="text-[10px] tracking-[0.16em] uppercase" style={{ color: theme.muted }}>Priorities · 2026</span>
+        <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: theme.accent }} />
+      </div>
     </div>
   )
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// ─── Dynamic background colour ────────────────────────────────────────────────
+function DynamicBg({ progress, total }: { progress: ReturnType<typeof useSpring>; total: number }) {
+  return (
+    <>
+      {CARD_THEMES.map((theme, i) => {
+        const mid   = i / total
+        const start = Math.max(0, mid - 0.5 / total)
+        const end   = Math.min(1, mid + 0.5 / total)
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const op = useTransform(progress, [start, mid, end], [0, 1, 0])
+        return (
+          <motion.div
+            key={i}
+            className="absolute inset-0"
+            style={{
+              opacity: op,
+              background: `radial-gradient(ellipse 110% 80% at 50% 30%, ${theme.glow} 0%, ${theme.bg} 50%, ${theme.bg} 100%)`,
+            }}
+          />
+        )
+      })}
+    </>
+  )
+}
+
+// ─── Main export ──────────────────────────────────────────────────────────────
 export default function PositioningSection() {
-  const ref    = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-80px' })
+  const containerRef = useRef<HTMLDivElement>(null)
+  const total = CARDS.length
+
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ['start start', 'end end'],
+  })
+
+  const progress = useSpring(scrollYProgress, {
+    stiffness: 80,
+    damping: 22,
+    restDelta: 0.0001,
+  })
 
   return (
-    <section
-      ref={ref}
-      className="relative py-20 sm:py-28 lg:py-32 px-5 sm:px-8 overflow-hidden"
-      style={{
-        background: 'radial-gradient(ellipse 120% 80% at 50% 30%, rgba(233,223,180,0.55) 0%, #F5F0E8 45%, #F0EBF5 100%)',
-      }}
-    >
-      {/* Rising bubbles */}
-      <RisingPool />
+    <div ref={containerRef} style={{ height: `${total * 80}vh` }}>
+      <div
+        className="sticky top-0 w-full overflow-hidden"
+        style={{ height: '100svh' }}
+      >
+        {/* Dynamic background */}
+        <div className="absolute inset-0 z-0">
+          {/* Base warm bg */}
+          <div className="absolute inset-0" style={{ background: '#F5F0E8' }} />
+          <DynamicBg progress={progress} total={total} />
+        </div>
 
-      {/* Paper texture */}
-      <div className="absolute inset-0 pointer-events-none z-[2]" style={{
-        opacity: 0.018,
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-        backgroundSize: '200px',
-      }} />
+        {/* Paper texture */}
+        <div
+          className="absolute inset-0 pointer-events-none z-[1]"
+          style={{
+            opacity: 0.018,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+            backgroundSize: '200px',
+          }}
+        />
 
-      <div className="max-w-2xl mx-auto relative z-10">
-
-        {/* ── Header ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center mb-10 sm:mb-14"
-        >
-          <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-[#8A7E6E] block mb-4">Let&apos;s be honest</span>
-          <h2 className="font-serif text-[clamp(32px,6vw,68px)] font-bold text-[#2C2416] leading-[0.92] tracking-tight">
-            This app is<br />
-            <em className="text-[#83934D]">not for everyone.</em>
-          </h2>
-          <motion.p
-            initial={{ opacity: 0, y: 14 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            className="mt-4 text-[14px] sm:text-[16px] text-[#7A6E5F] leading-relaxed"
-          >
-            And that&apos;s the whole point.
-          </motion.p>
-        </motion.div>
-
-        {/* ── NOT for pills ── */}
-        <motion.div
-          className="flex flex-wrap gap-2 sm:gap-3 justify-center mb-10 sm:mb-14"
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.2, duration: 0.7 }}
-        >
-          {notForPills.map((p, i) => (
+        {/* Deco bubbles — few, always visible */}
+        <div className="absolute inset-0 z-[2] pointer-events-none">
+          {DECO.map((b, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={inView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ delay: 0.25 + i * 0.08, duration: 0.5 }}
-              className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full border"
+              className="absolute rounded-full"
               style={{
-                background: 'rgba(44,36,22,0.04)',
-                borderColor: 'rgba(44,36,22,0.10)',
+                left: b.x, top: b.y,
+                width: b.size, height: b.size,
+                background: b.color,
+                opacity: b.opacity,
+                filter: 'blur(1px)',
               }}
-            >
-              <span className="text-base">{p.icon}</span>
-              <span className="text-[12px] sm:text-[13px] text-[#B0A898] line-through">{p.line}</span>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* ── Divider ── */}
-        <motion.div
-          initial={{ opacity: 0, scaleX: 0 }}
-          animate={inView ? { opacity: 1, scaleX: 1 } : {}}
-          transition={{ delay: 0.6, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="flex items-center gap-4 mb-10 sm:mb-12"
-        >
-          <div className="flex-1 h-px" style={{ background: 'rgba(44,36,22,0.12)' }} />
-          <span className="font-serif italic text-[#83934D] text-[16px] sm:text-[20px] whitespace-nowrap">
-            but it is for this.
-          </span>
-          <div className="flex-1 h-px" style={{ background: 'rgba(44,36,22,0.12)' }} />
-        </motion.div>
-
-        {/* ── FOR lines ── */}
-        <div className="flex flex-col items-center gap-4 sm:gap-5 mb-12 sm:mb-16">
-          {forLines.map((line, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 24, filter: 'blur(4px)' }}
-              animate={inView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
-              transition={{ delay: 0.65 + i * 0.1, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="flex items-center gap-3 sm:gap-4 group justify-center"
-            >
-              <motion.span
-                className="text-xl sm:text-2xl flex-shrink-0"
-                animate={{ rotate: [0, 6, -6, 0] }}
-                transition={{ delay: i * 1.2, duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-              >{line.emoji}</motion.span>
-              <span
-                className="text-[15px] sm:text-[18px] font-serif italic leading-snug text-center transition-colors duration-300"
-                style={{ color: '#2C2416' }}
-              >
-                {line.text}
-              </span>
-            </motion.div>
+              animate={{
+                y:     [0, -18, 0],
+                x:     [0, i % 2 === 0 ? 8 : -8, 0],
+                scale: [1, 1.08, 1],
+              }}
+              transition={{
+                duration: b.dur,
+                repeat: Infinity,
+                ease: 'easeInOut',
+                delay: i * 0.6,
+              }}
+            />
           ))}
         </div>
 
-        {/* ── Manifesto card — kept, light frosted ── */}
+        {/* Stacked cards — centred vertically */}
+        <div className="absolute inset-0 z-[3] flex items-center justify-center">
+          <div className="relative w-full max-w-lg" style={{ height: 280 }}>
+            {CARDS.map((card, i) => (
+              <StackCard
+                key={i}
+                index={i}
+                total={total}
+                progress={progress}
+                theme={CARD_THEMES[i]}
+                card={card}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Scroll hint — fades out once scrolled */}
         <motion.div
-          initial={{ opacity: 0, y: 36, filter: 'blur(8px)' }}
-          animate={inView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
-          transition={{ delay: 1.1, duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="rounded-2xl sm:rounded-3xl px-6 sm:px-12 py-10 sm:py-14"
+          className="absolute bottom-8 left-0 right-0 flex flex-col items-center gap-2 pointer-events-none z-[4]"
           style={{
-            background: 'rgba(255,255,255,0.58)',
-            backdropFilter: 'blur(18px)',
-            WebkitBackdropFilter: 'blur(18px)',
-            border: '1px solid rgba(255,255,255,0.75)',
-            boxShadow: '0 8px 40px rgba(44,36,22,0.08), 0 1px 0 rgba(255,255,255,0.9) inset',
+            opacity: useTransform(progress, [0, 0.08], [1, 0]),
           }}
         >
-          <div className="text-center mb-4">
-            <span className="font-serif text-[64px] text-[#83934D] leading-none select-none" style={{ lineHeight: 0.6, opacity: 0.45 }}>&ldquo;</span>
-          </div>
-          <p className="font-serif text-center text-[clamp(18px,3.5vw,28px)] text-[#2C2416] leading-[1.5] tracking-tight">
-            The world has a million apps
-            <br />
-            <em className="text-[#83934D] not-italic">for everyone.</em>
-            <br />
-            <span style={{ opacity: 0.6 }}>We made one</span>
-            <br />
-            for{' '}<em className="text-[#83934D] font-bold">the one.</em>
-          </p>
-          <div className="text-center mt-6">
-            <span className="font-serif text-[64px] text-[#83934D] leading-none select-none" style={{ lineHeight: 0.6, opacity: 0.45 }}>&rdquo;</span>
-          </div>
-          <div className="mt-6 flex items-center justify-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#83934D' }} />
-            <span className="text-[10px] sm:text-[11px] tracking-[0.16em] uppercase text-[#8A7E6E]">Priorities · 2026</span>
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#83934D' }} />
-          </div>
+          <motion.div
+            className="w-5 h-8 rounded-full border-2 flex items-start justify-center pt-1"
+            style={{ borderColor: 'rgba(44,36,22,0.25)' }}
+          >
+            <motion.div
+              className="w-1 h-2 rounded-full"
+              style={{ background: 'rgba(44,36,22,0.40)' }}
+              animate={{ y: [0, 8, 0] }}
+              transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          </motion.div>
+          <span className="text-[10px] tracking-widest uppercase" style={{ color: 'rgba(44,36,22,0.35)' }}>scroll</span>
         </motion.div>
 
       </div>
-    </section>
+    </div>
   )
 }
