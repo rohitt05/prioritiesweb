@@ -2,9 +2,9 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 
-// SVG avatar faces — boy/girl variants with different skin tones & hair
+// SVG avatar faces — 6 variants
 const FACE_VARIANTS = [
-  // girl - light skin, dark hair bun
+  // 0: girl - light skin, dark hair bun
   (size: number, key: string) => (
     <svg key={key} width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="32" cy="32" r="32" fill="#FAD1D8"/>
@@ -13,9 +13,6 @@ const FACE_VARIANTS = [
       <ellipse cx="32" cy="18" rx="13" ry="10" fill="#3D2314"/>
       <ellipse cx="20" cy="22" rx="5" ry="7" fill="#3D2314"/>
       <ellipse cx="44" cy="22" rx="5" ry="7" fill="#3D2314"/>
-      <ellipse cx="32" cy="14" rx="8" ry="7" fill="#3D2314"/>
-      <ellipse cx="26" cy="30" rx="2.5" ry="3" fill="#8B4513" opacity="0.5"/>
-      <ellipse cx="38" cy="30" rx="2.5" ry="3" fill="#8B4513" opacity="0.5"/>
       <circle cx="26" cy="30" r="1.2" fill="#3D2314"/>
       <circle cx="38" cy="30" r="1.2" fill="#3D2314"/>
       <path d="M28 37 Q32 40 36 37" stroke="#C17B6B" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
@@ -23,21 +20,19 @@ const FACE_VARIANTS = [
       <ellipse cx="40" cy="36" rx="3" ry="1.5" fill="#F4A0A0" opacity="0.5"/>
     </svg>
   ),
-  // boy - medium skin, short dark hair
+  // 1: boy - medium skin, short dark hair
   (size: number, key: string) => (
     <svg key={key} width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="32" cy="32" r="32" fill="#DBC0E7"/>
       <ellipse cx="32" cy="38" rx="16" ry="14" fill="#C68642"/>
       <ellipse cx="32" cy="28" rx="13" ry="13" fill="#C68642"/>
       <rect x="19" y="15" width="26" height="14" rx="6" fill="#2C1A0E"/>
-      <ellipse cx="26" cy="30" rx="2.5" ry="3" fill="#8B6914" opacity="0.5"/>
-      <ellipse cx="38" cy="30" rx="2.5" ry="3" fill="#8B6914" opacity="0.5"/>
       <circle cx="26" cy="30" r="1.3" fill="#2C1A0E"/>
       <circle cx="38" cy="30" r="1.3" fill="#2C1A0E"/>
       <path d="M28 37 Q32 39 36 37" stroke="#A0522D" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
     </svg>
   ),
-  // girl - dark skin, curly hair
+  // 2: girl - dark skin, curly hair
   (size: number, key: string) => (
     <svg key={key} width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="32" cy="32" r="32" fill="#C9E6EE"/>
@@ -53,7 +48,7 @@ const FACE_VARIANTS = [
       <ellipse cx="40" cy="36" rx="3" ry="1.5" fill="#C17B6B" opacity="0.4"/>
     </svg>
   ),
-  // boy - light skin, wavy brown hair
+  // 3: boy - light skin, wavy brown hair
   (size: number, key: string) => (
     <svg key={key} width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="32" cy="32" r="32" fill="#D4E6D0"/>
@@ -65,7 +60,7 @@ const FACE_VARIANTS = [
       <path d="M28 37 Q32 39 36 37" stroke="#C17B6B" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
     </svg>
   ),
-  // girl - medium skin, ponytail
+  // 4: girl - medium skin, ponytail
   (size: number, key: string) => (
     <svg key={key} width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="32" cy="32" r="32" fill="#F0E6C8"/>
@@ -80,7 +75,7 @@ const FACE_VARIANTS = [
       <ellipse cx="40" cy="36" rx="3" ry="1.5" fill="#F4A0A0" opacity="0.5"/>
     </svg>
   ),
-  // boy - dark skin, fade cut
+  // 5: boy - dark skin, fade cut
   (size: number, key: string) => (
     <svg key={key} width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="32" cy="32" r="32" fill="#E8D5C4"/>
@@ -94,7 +89,6 @@ const FACE_VARIANTS = [
   ),
 ]
 
-// Center "You" avatar
 function YouAvatar({ size }: { size: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -111,36 +105,61 @@ function YouAvatar({ size }: { size: number }) {
   )
 }
 
-// 9 active priority contacts around "You"
+// 9 active contacts — evenly distributed in a clean ring
+// Angles spread: top(270°), upper-left(210°), upper-right(330°), left(180°), right(0°), lower-left(150°), lower-right(30°), bottom-left(240°), bottom-right(300°) — shifted to feel natural
 const ACTIVE_9 = [
-  { label: 'Jaanu 🌸', faceIdx: 0, angle: 270, dist: 110, size: 60, color: '#FAD1D8', ring: true },
-  { label: 'Aryan',    faceIdx: 1, angle: 210, dist: 110, size: 54, color: '#DBC0E7' },
-  { label: 'Diya',     faceIdx: 2, angle: 330, dist: 110, size: 54, color: '#C9E6EE' },
-  { label: 'Nisha',    faceIdx: 4, angle: 150, dist: 185, size: 50, color: '#F0E6C8' },
-  { label: 'Karan',    faceIdx: 3, angle: 30,  dist: 185, size: 48, color: '#D4E6D0' },
-  { label: 'Riya',     faceIdx: 0, angle: 90,  dist: 185, size: 46, color: '#FAD1D8', opacity: 0.85 },
-  { label: 'Maa',      faceIdx: 2, angle: 200, dist: 255, size: 44, color: '#E8D5C4', opacity: 0.75 },
-  { label: 'Raj',      faceIdx: 5, angle: 320, dist: 255, size: 42, color: '#DBC0E7', opacity: 0.7  },
-  { label: 'Zara',     faceIdx: 4, angle: 70,  dist: 255, size: 40, color: '#C9E6EE', opacity: 0.65 },
+  { label: 'Diya',    faceIdx: 2, angle: 270, dist: 155, size: 56, color: '#C9E6EE' },
+  { label: 'Karan',   faceIdx: 3, angle: 310, dist: 155, size: 54, color: '#D4E6D0' },
+  { label: 'Aryan',   faceIdx: 1, angle: 230, dist: 155, size: 54, color: '#DBC0E7' },
+  { label: 'Jaanu 🌸', faceIdx: 0, angle: 180, dist: 148, size: 62, color: '#FAD1D8', isJaanu: true },
+  { label: 'Riya',    faceIdx: 4, angle: 0,   dist: 148, size: 50, color: '#F0E6C8' },
+  { label: 'Nisha',   faceIdx: 0, angle: 140, dist: 155, size: 48, color: '#FAD1D8' },
+  { label: 'Zara',    faceIdx: 4, angle: 40,  dist: 155, size: 46, color: '#C9E6EE' },
+  { label: 'Maa',     faceIdx: 2, angle: 200, dist: 210, size: 46, color: '#E8D5C4' },
+  { label: 'Raj',     faceIdx: 5, angle: 340, dist: 210, size: 44, color: '#DBC0E7' },
 ]
 
-// Ghost/faded background avatars (the world)
+// Ghost avatars — significantly more visible than before (opacity 0.28–0.42)
 const GHOST_AVATARS = [
-  { angle: 10,  dist: 310, size: 34, opacity: 0.13, faceIdx: 1 },
-  { angle: 55,  dist: 295, size: 28, opacity: 0.10, faceIdx: 3 },
-  { angle: 100, dist: 320, size: 32, opacity: 0.11, faceIdx: 0 },
-  { angle: 140, dist: 300, size: 26, opacity: 0.09, faceIdx: 2 },
-  { angle: 175, dist: 315, size: 30, opacity: 0.12, faceIdx: 5 },
-  { angle: 235, dist: 295, size: 28, opacity: 0.10, faceIdx: 4 },
-  { angle: 280, dist: 310, size: 32, opacity: 0.11, faceIdx: 1 },
-  { angle: 350, dist: 305, size: 26, opacity: 0.09, faceIdx: 3 },
-  // Extra ghost decorative plain circles
-  { angle: 25,  dist: 340, size: 22, opacity: 0.07, faceIdx: -1 },
-  { angle: 80,  dist: 350, size: 18, opacity: 0.06, faceIdx: -1 },
-  { angle: 120, dist: 345, size: 20, opacity: 0.07, faceIdx: -1 },
-  { angle: 200, dist: 335, size: 24, opacity: 0.08, faceIdx: -1 },
-  { angle: 260, dist: 345, size: 18, opacity: 0.06, faceIdx: -1 },
-  { angle: 305, dist: 340, size: 20, opacity: 0.07, faceIdx: -1 },
+  { angle: 10,  dist: 275, size: 46, opacity: 0.40, faceIdx: 1 },
+  { angle: 52,  dist: 260, size: 40, opacity: 0.34, faceIdx: 3 },
+  { angle: 95,  dist: 278, size: 44, opacity: 0.38, faceIdx: 0 },
+  { angle: 132, dist: 262, size: 38, opacity: 0.32, faceIdx: 2 },
+  { angle: 170, dist: 274, size: 42, opacity: 0.36, faceIdx: 5 },
+  { angle: 218, dist: 264, size: 40, opacity: 0.32, faceIdx: 4 },
+  { angle: 260, dist: 276, size: 44, opacity: 0.38, faceIdx: 1 },
+  { angle: 298, dist: 260, size: 38, opacity: 0.30, faceIdx: 3 },
+  { angle: 342, dist: 268, size: 42, opacity: 0.34, faceIdx: 0 },
+  // Outer ring — slightly more faded
+  { angle: 28,  dist: 335, size: 36, opacity: 0.24, faceIdx: 2 },
+  { angle: 74,  dist: 325, size: 32, opacity: 0.20, faceIdx: 5 },
+  { angle: 118, dist: 338, size: 34, opacity: 0.22, faceIdx: 4 },
+  { angle: 192, dist: 328, size: 36, opacity: 0.24, faceIdx: 1 },
+  { angle: 248, dist: 333, size: 30, opacity: 0.18, faceIdx: 3 },
+  { angle: 318, dist: 324, size: 34, opacity: 0.22, faceIdx: 0 },
+]
+
+// Decorative plain-circle bubbles — more of them, scattered
+const DECO_BUBBLES = [
+  { angle: 18,  dist: 300, size: 18, color: '#FAD1D8', opacity: 0.58 },
+  { angle: 58,  dist: 238, size: 12, color: '#DBC0E7', opacity: 0.50 },
+  { angle: 102, dist: 308, size: 16, color: '#C9E6EE', opacity: 0.55 },
+  { angle: 148, dist: 242, size: 14, color: '#D4A373', opacity: 0.40 },
+  { angle: 188, dist: 304, size: 20, color: '#F0E6C8', opacity: 0.52 },
+  { angle: 228, dist: 238, size: 12, color: '#FAD1D8', opacity: 0.48 },
+  { angle: 268, dist: 298, size: 16, color: '#DBC0E7', opacity: 0.54 },
+  { angle: 308, dist: 240, size: 14, color: '#C9E6EE', opacity: 0.48 },
+  { angle: 348, dist: 302, size: 18, color: '#D4E6D0', opacity: 0.56 },
+  { angle: 38,  dist: 365, size: 10, color: '#FAD1D8', opacity: 0.34 },
+  { angle: 82,  dist: 354, size: 8,  color: '#DBC0E7', opacity: 0.28 },
+  { angle: 154, dist: 358, size: 10, color: '#C9E6EE', opacity: 0.32 },
+  { angle: 202, dist: 368, size: 8,  color: '#F0E6C8', opacity: 0.26 },
+  { angle: 252, dist: 358, size: 10, color: '#FAD1D8', opacity: 0.30 },
+  { angle: 332, dist: 362, size: 9,  color: '#D4E6D0', opacity: 0.28 },
+  // Extra inner-mid bubbles
+  { angle: 70,  dist: 190, size: 8,  color: '#FAD1D8', opacity: 0.35 },
+  { angle: 160, dist: 185, size: 7,  color: '#DBC0E7', opacity: 0.30 },
+  { angle: 290, dist: 188, size: 9,  color: '#C9E6EE', opacity: 0.33 },
 ]
 
 function toXY(angleDeg: number, dist: number) {
@@ -154,30 +173,23 @@ export default function AudienceSection() {
 
   return (
     <section id="about" ref={ref} className="relative py-20 sm:py-28 px-5 sm:px-8 bg-[#FDFCF0] overflow-hidden">
-      {/* Ghost watermark text — "priorities" repeated 9 times */}
+
+      {/* Single large "9 priorities" watermark — one centered instance, big & subtle */}
       <motion.div
-        className="absolute inset-0 pointer-events-none select-none overflow-hidden"
+        className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden"
         initial={{ opacity: 0 }}
         animate={inView ? { opacity: 1 } : {}}
-        transition={{ duration: 1.6 }}
+        transition={{ duration: 1.8 }}
       >
-        {Array.from({ length: 9 }).map((_, i) => {
-          const row = Math.floor(i / 3)
-          const col = i % 3
-          return (
-            <span
-              key={i}
-              className="font-serif italic font-bold text-[clamp(40px,9vw,110px)] text-[rgba(67,61,53,0.035)] absolute whitespace-nowrap leading-none"
-              style={{
-                top:  `${15 + row * 33}%`,
-                left: `${-5 + col * 35}%`,
-                transform: `rotate(-8deg)`,
-              }}
-            >
-              priorities
-            </span>
-          )
-        })}
+        <span
+          className="font-serif italic font-bold whitespace-nowrap leading-none"
+          style={{
+            fontSize: 'clamp(90px, 24vw, 280px)',
+            color: 'rgba(67,61,53,0.055)',
+          }}
+        >
+          9 priorities
+        </span>
       </motion.div>
 
       <div className="max-w-5xl mx-auto relative z-10">
@@ -199,44 +211,57 @@ export default function AudienceSection() {
         {/* Avatar constellation */}
         <motion.div
           className="relative mx-auto flex items-center justify-center"
-          style={{ width: 680, height: 680, maxWidth: '100%' }}
+          style={{ width: 780, height: 780, maxWidth: '100%' }}
           initial={{ opacity: 0, scale: 0.88 }}
           animate={inView ? { opacity: 1, scale: 1 } : {}}
           transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
         >
-          {/* Subtle orbit rings */}
-          {[110, 185, 255].map((r, i) => (
+          {/* Orbit rings */}
+          {[148, 200, 265, 335].map((r, i) => (
             <div key={i} className="absolute rounded-full border border-dashed"
               style={{
                 width: r * 2,
                 height: r * 2,
-                borderColor: `rgba(44,39,32,${0.05 - i * 0.01})`,
+                borderColor: `rgba(44,39,32,${0.055 - i * 0.01})`,
               }}
             />
           ))}
 
-          {/* Ghost / faded world avatars */}
+          {/* Deco bubbles */}
+          {DECO_BUBBLES.map((b, i) => {
+            const { x, y } = toXY(b.angle, b.dist)
+            return (
+              <motion.div key={`deco-${i}`}
+                className="absolute rounded-full"
+                style={{
+                  width: b.size, height: b.size,
+                  background: b.color,
+                  left: `calc(50% + ${x}px - ${b.size / 2}px)`,
+                  top:  `calc(50% + ${y}px - ${b.size / 2}px)`,
+                  opacity: b.opacity,
+                }}
+                animate={{ scale: [1, 1.18, 1], opacity: [b.opacity, b.opacity * 1.35, b.opacity] }}
+                transition={{ delay: i * 0.28, duration: 4 + i * 0.35, repeat: Infinity, ease: 'easeInOut' }}
+              />
+            )
+          })}
+
+          {/* Ghost / faded world avatars — properly visible now */}
           {GHOST_AVATARS.map((a, i) => {
             const { x, y } = toXY(a.angle, a.dist)
             return (
               <motion.div key={`ghost-${i}`}
-                className="absolute"
+                className="absolute rounded-full overflow-hidden"
                 style={{
+                  width: a.size, height: a.size,
                   left: `calc(50% + ${x}px - ${a.size / 2}px)`,
                   top:  `calc(50% + ${y}px - ${a.size / 2}px)`,
                   opacity: a.opacity,
-                  filter: 'blur(1.5px)',
                 }}
-                animate={{ opacity: [a.opacity, a.opacity * 1.5, a.opacity] }}
-                transition={{ delay: i * 0.5, duration: 6 + i * 0.7, repeat: Infinity, ease: 'easeInOut' }}
+                animate={{ opacity: [a.opacity, Math.min(a.opacity * 1.45, 0.65), a.opacity], scale: [1, 1.05, 1] }}
+                transition={{ delay: i * 0.38, duration: 5 + i * 0.45, repeat: Infinity, ease: 'easeInOut' }}
               >
-                {a.faceIdx >= 0 ? (
-                  <div className="rounded-full overflow-hidden" style={{ width: a.size, height: a.size }}>
-                    {FACE_VARIANTS[a.faceIdx](a.size, `gf-${i}`)}
-                  </div>
-                ) : (
-                  <div className="rounded-full bg-[#C4B9A8]" style={{ width: a.size, height: a.size }} />
-                )}
+                {FACE_VARIANTS[a.faceIdx](a.size, `gf-${i}`)}
               </motion.div>
             )
           })}
@@ -244,8 +269,7 @@ export default function AudienceSection() {
           {/* 9 active priority avatars */}
           {ACTIVE_9.map((a, i) => {
             const { x, y } = toXY(a.angle, a.dist)
-            const opacityVal = a.opacity ?? 1
-            const isJaanu = i === 0
+            const isJaanu = !!(a as { isJaanu?: boolean }).isJaanu
             return (
               <motion.div key={`active-${i}`}
                 className="absolute flex flex-col items-center"
@@ -254,14 +278,13 @@ export default function AudienceSection() {
                   top:  `calc(50% + ${y}px - ${a.size / 2}px)`,
                 }}
                 initial={{ opacity: 0, scale: 0.5 }}
-                animate={inView ? { opacity: opacityVal, scale: 1 } : {}}
+                animate={inView ? { opacity: 1, scale: 1 } : {}}
                 transition={{ delay: 0.3 + i * 0.1, duration: 0.7, ease: [0.34, 1.56, 0.64, 1] }}
               >
-                {/* Glow for Jaanu */}
                 {isJaanu && (
                   <motion.div className="absolute rounded-full"
-                    style={{ width: a.size + 24, height: a.size + 24, top: -12, left: -12, background: '#FAD1D8', opacity: 0.35, filter: 'blur(10px)' }}
-                    animate={{ scale: [1, 1.2, 1], opacity: [0.35, 0.55, 0.35] }}
+                    style={{ width: a.size + 24, height: a.size + 24, top: -12, left: -12, background: '#FAD1D8', opacity: 0.4, filter: 'blur(10px)' }}
+                    animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.6, 0.4] }}
                     transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                   />
                 )}
@@ -270,7 +293,7 @@ export default function AudienceSection() {
                   style={{
                     width: a.size, height: a.size,
                     border: isJaanu ? '2.5px solid #FAD1D8' : '1.5px solid rgba(44,39,32,0.1)',
-                    boxShadow: isJaanu ? '0 4px 16px rgba(250,209,216,0.4)' : '0 2px 8px rgba(44,39,32,0.08)',
+                    boxShadow: isJaanu ? '0 4px 16px rgba(250,209,216,0.45)' : '0 2px 8px rgba(44,39,32,0.08)',
                   }}
                   animate={{ y: [0, isJaanu ? -8 : -4, 0] }}
                   transition={{ delay: i * 0.8, duration: isJaanu ? 4 : 5 + i, repeat: Infinity, ease: 'easeInOut' }}
@@ -301,9 +324,8 @@ export default function AudienceSection() {
             animate={inView ? { opacity: 1, scale: 1 } : {}}
             transition={{ delay: 0.1, duration: 0.9, ease: [0.34, 1.56, 0.64, 1] }}
           >
-            {/* Gold glow ring */}
             <motion.div className="absolute rounded-full"
-              style={{ width: 140, height: 140, top: -18, left: -18, background: 'radial-gradient(circle, #D4A373 0%, transparent 70%)', opacity: 0.22 }}
+              style={{ width: 148, height: 148, top: -20, left: -20, background: 'radial-gradient(circle, #D4A373 0%, transparent 70%)', opacity: 0.22 }}
               animate={{ scale: [1, 1.18, 1] }}
               transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
             />
