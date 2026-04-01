@@ -355,7 +355,16 @@ export default function Footer() {
               <ul className="space-y-3">
                 <li><a href="mailto:hello@getpriorities.app"   className="hover:text-[#F5F0E8] transition-colors">Contact</a></li>
                 <li><a href="mailto:support@getpriorities.app" className="hover:text-[#F5F0E8] transition-colors">Support</a></li>
-                <li><Link href="/careers" className="hover:text-[#F5F0E8] transition-colors">Careers</Link></li>
+                <li>
+                  <Link
+                    href="/careers"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-[#F5F0E8] transition-colors"
+                  >
+                    Careers
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
