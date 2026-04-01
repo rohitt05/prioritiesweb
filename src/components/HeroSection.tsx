@@ -14,7 +14,7 @@ export default function HeroSection() {
   const sy = useSpring(y, { stiffness: 55, damping: 18 })
 
   return (
-    <section ref={ref} className="relative min-h-[100svh] flex flex-col items-center justify-center px-5 sm:px-8 pt-24 sm:pt-28 pb-16 sm:pb-20 overflow-hidden">
+    <section ref={ref} className="relative min-h-[100svh] flex flex-col items-center justify-center px-5 sm:px-8 pt-24 sm:pt-28 pb-28 sm:pb-36 overflow-hidden">
       <DecoBubbles />
 
       <motion.div style={{ y: sy, opacity: op, scale: sc }} className="relative z-10 text-center max-w-4xl mx-auto w-full">
@@ -106,10 +106,10 @@ export default function HeroSection() {
         ))}
       </motion.div>
 
-      {/* Scroll indicator — z-0 so it never overlaps buttons */}
+      {/* Scroll indicator — sits well below the CTAs */}
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.6 }}
-        className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-0 pointer-events-none"
+        className="absolute bottom-8 sm:bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-0 pointer-events-none"
       >
         <span className="label-tag">scroll</span>
         <motion.div
