@@ -28,6 +28,78 @@ const FRIENDS_BASE = [
 ]
 const YOU_BASE = { faceIdx: 6, label: 'you', r: 74 }
 
+// ─── Deco Bubbles ──────────────────────────────────────────────
+const BUBBLE_COLORS = [
+  'rgba(193,123,107,0.13)',
+  'rgba(212,163,115,0.10)',
+  'rgba(245,240,232,0.05)',
+  'rgba(180,140,100,0.08)',
+  'rgba(160,100,80,0.09)',
+  'rgba(210,180,140,0.07)',
+  'rgba(255,200,160,0.06)',
+  'rgba(140,90,70,0.10)',
+  'rgba(230,200,170,0.05)',
+  'rgba(190,150,120,0.08)',
+]
+
+const BUBBLES = Array.from({ length: 42 }, (_, i) => {
+  // Seeded pseudo-random using index so it's stable across renders
+  const seed = (i * 137.508 + 42) % 100
+  const seed2 = (i * 73.21 + 11) % 100
+  const seed3 = (i * 29.87 + 7)  % 100
+  const seed4 = (i * 53.44 + 19) % 100
+  const seed5 = (i * 17.63 + 3)  % 100
+  return {
+    id: i,
+    size:     6  + (seed  / 100) * 74,           // 6px – 80px
+    left:     (seed2 / 100) * 100,               // 0% – 100%
+    bottom:   -10 + (seed3 / 100) * 60,          // starts near bottom half
+    duration: 14 + (seed4 / 100) * 28,           // 14s – 42s
+    delay:    -(seed5 / 100) * 30,               // already in progress
+    drift:    -30 + (seed  / 100) * 60,          // horizontal drift px
+    color:    BUBBLE_COLORS[i % BUBBLE_COLORS.length],
+    blur:     (seed2 / 100) * 3,                 // 0 – 3px blur
+    border:   i % 3 === 0,                       // 1/3 get a thin ring instead of fill
+  }
+})
+
+function DecoBubbles() {
+  return (
+    <>
+      <style>{`
+        @keyframes bubble-rise {
+          0%   { transform: translateY(0)   translateX(0)      scale(1);    opacity: 0; }
+          8%   { opacity: 1; }
+          50%  { transform: translateY(-55vh) translateX(var(--drift))  scale(1.04); opacity: 0.85; }
+          92%  { opacity: 0.4; }
+          100% { transform: translateY(-115vh) translateX(calc(var(--drift) * 1.6)) scale(0.9); opacity: 0; }
+        }
+      `}</style>
+      {BUBBLES.map(b => (
+        <div
+          key={b.id}
+          style={{
+            position: 'absolute',
+            bottom: `${b.bottom}%`,
+            left:   `${b.left}%`,
+            width:  `${b.size}px`,
+            height: `${b.size}px`,
+            borderRadius: '50%',
+            background:   b.border ? 'transparent' : b.color,
+            border:       b.border ? `1.5px solid ${b.color.replace(/[\.\d]+\)$/, '0.22)')}` : 'none',
+            filter:       b.blur > 0.5 ? `blur(${b.blur.toFixed(1)}px)` : undefined,
+            '--drift':    `${b.drift}px`,
+            animation:    `bubble-rise ${b.duration.toFixed(1)}s ${b.delay.toFixed(1)}s linear infinite`,
+            pointerEvents: 'none',
+            willChange:   'transform, opacity',
+          } as React.CSSProperties}
+        />
+      ))}
+    </>
+  )
+}
+// ───────────────────────────────────────────────────────────────
+
 function PhysicsStage({ trigger, width, height }: { trigger: boolean; width: number; height: number }) {
   const canvasRef   = useRef<HTMLCanvasElement>(null)
   const startedRef  = useRef(false)
@@ -65,10 +137,9 @@ function PhysicsStage({ trigger, width, height }: { trigger: boolean; width: num
 
       const wo = { isStatic: true, render: { visible: false }, friction: 0.4, restitution: 0.25 }
       Composite.add(engine.world, [
-        Bodies.rectangle(W / 2,  H + 25,   W + 200, 50,   wo), // floor
-        Bodies.rectangle(-25,    H / 2,    50, H * 4,     wo), // left wall
-        Bodies.rectangle(W + 25, H / 2,    50, H * 4,     wo), // right wall
-        // NO ceiling — avatars can fly all the way up
+        Bodies.rectangle(W / 2,  H + 25,   W + 200, 50,   wo),
+        Bodies.rectangle(-25,    H / 2,    50, H * 4,     wo),
+        Bodies.rectangle(W + 25, H / 2,    50, H * 4,     wo),
       ])
 
       const FRIENDS_COUNT = FRIENDS_BASE.length
@@ -122,7 +193,6 @@ function PhysicsStage({ trigger, width, height }: { trigger: boolean; width: num
           const isYou: boolean = body.__isYou
           if (r === undefined) return
 
-          // face
           ctx.save()
           ctx.translate(x, y); ctx.rotate(body.angle)
           ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.clip()
@@ -133,7 +203,6 @@ function PhysicsStage({ trigger, width, height }: { trigger: boolean; width: num
           }
           ctx.restore()
 
-          // ring
           ctx.save(); ctx.translate(x, y)
           if (isYou) {
             ctx.beginPath(); ctx.arc(0, 0, r + Math.max(6, 10 * scale), 0, Math.PI * 2)
@@ -146,7 +215,6 @@ function PhysicsStage({ trigger, width, height }: { trigger: boolean; width: num
           }
           ctx.restore()
 
-          // label
           const labelSize = Math.max(8, Math.round(r * 0.21))
           ctx.save(); ctx.translate(x, y)
           ctx.font = `${isYou ? 700 : 500} ${labelSize}px Inter,sans-serif`
@@ -205,7 +273,12 @@ function AnimatedBlock({ inView }: { inView: boolean }) {
         overflow: 'hidden',
       }}
     >
-      {/* Text overlay — sits behind avatars via z-index */}
+      {/* z:0 — decorative floating bubbles in background */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+        <DecoBubbles />
+      </div>
+
+      {/* z:1 — text overlay */}
       <div
         style={{
           position: 'absolute',
@@ -247,7 +320,7 @@ function AnimatedBlock({ inView }: { inView: boolean }) {
         </p>
       </div>
 
-      {/* Physics canvas on top */}
+      {/* z:2 — physics canvas on top */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
         <PhysicsStage trigger={inView} width={dims.width} height={dims.height} />
       </div>
