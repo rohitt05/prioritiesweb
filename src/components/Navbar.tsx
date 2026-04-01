@@ -47,32 +47,31 @@ export default function Navbar() {
         transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
         className="fixed top-0 left-0 right-0 z-50 flex justify-center"
         style={{
-          paddingTop:    scrolled ? '10px' : '14px',
-          paddingBottom: scrolled ? '0'    : '0',
+          paddingTop: scrolled ? '10px' : '18px',
           transition: 'padding 0.4s ease',
         }}
       >
         <motion.div
           animate={{
-            width:           scrolled ? '90%'   : '100%',
-            maxWidth:        scrolled ? '820px' : '1152px',
-            borderRadius:    scrolled ? 999     : 0,
-            paddingLeft:     scrolled ? 20      : 32,
-            paddingRight:    scrolled ? 20      : 32,
-            paddingTop:      scrolled ? 10      : 14,
-            paddingBottom:   scrolled ? 10      : 14,
-            // ─ ALWAYS glassy, just stronger on scroll ─
+            width:        scrolled ? '90%'   : '100%',
+            maxWidth:     scrolled ? '820px' : '1152px',
+            borderRadius: scrolled ? 999 : 0,
+            paddingLeft:  scrolled ? 20 : 32,
+            paddingRight: scrolled ? 20 : 32,
+            paddingTop:   scrolled ? 10 : 14,
+            paddingBottom:scrolled ? 10 : 14,
+            // transparent at top → glassy pill on scroll
             backgroundColor: scrolled
-              ? 'rgba(253,252,240,0.88)'
-              : 'rgba(253,252,240,0.55)',
+              ? 'rgba(253,252,240,0.75)'
+              : 'rgba(253,252,240,0)',
             boxShadow: scrolled
-              ? '0 2px 32px rgba(67,61,53,0.10), 0 0 0 1px rgba(67,61,53,0.07)'
-              : '0 1px 16px rgba(67,61,53,0.05), 0 0 0 1px rgba(67,61,53,0.04)',
+              ? '0 4px 32px rgba(67,61,53,0.10), 0 0 0 1px rgba(67,61,53,0.07)'
+              : 'none',
           }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          // backdrop-filter must stay on via className — Framer Motion can't animate it cleanly
-          className="flex items-center justify-between w-full backdrop-blur-xl"
-          style={{ WebkitBackdropFilter: 'blur(20px)', backdropFilter: 'blur(20px)' }}
+          className="flex items-center justify-between w-full"
+          // keep blur always ready so it kicks in instantly when pill appears
+          style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
         >
           {/* Logo — letter wave */}
           <motion.a
