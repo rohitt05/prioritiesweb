@@ -1,56 +1,53 @@
 'use client'
-import { useRef } from 'react'
+import { useRef, useMemo } from 'react'
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion'
 
-const filmDays = [
-  {
-    date: '30 mar',
-    label: 'Today',
-    films: [
-      { c: '#C9E6EE', isVideo: true }, { c: '#DDB892' }, { c: '#FAD1D8' },
-    ],
-  },
-  {
-    date: '29 mar',
-    label: 'Yesterday',
-    films: [
-      { c: '#FAD1D8' }, { c: '#B8C88D' }, { c: '#DBC0E7' },
-      { c: '#E9DFB4', isVideo: true }, { c: '#C9E6EE' }, { c: '#FFD4B8' },
-    ],
-  },
-  {
-    date: '28 mar',
-    label: '2 days ago',
-    films: [
-      { c: '#FEC8D8' }, { c: '#C0AEDE', isVideo: true }, { c: '#B6E3F4' }, { c: '#A8E6CF' },
-    ],
-  },
-  {
-    date: '27 mar',
-    label: '3 days ago',
-    films: [
-      { c: '#E9DFB4' }, { c: '#FFD4B8' }, { c: '#DBC0E7' },
-    ],
-  },
+const FILM_COLORS = [
+  ['#C9E6EE', '#DDB892', '#FAD1D8'],
+  ['#FAD1D8', '#B8C88D', '#DBC0E7', '#E9DFB4', '#C9E6EE', '#FFD4B8'],
+  ['#FEC8D8', '#C0AEDE', '#B6E3F4', '#A8E6CF'],
+  ['#E9DFB4', '#FFD4B8', '#DBC0E7'],
 ]
 
-// Individual film day row — each has its own scroll progress
-function FilmDayRow({ day, index }: { day: typeof filmDays[0]; index: number }) {
+const VIDEO_SLOTS = [[0], [3], [1], []]
+
+function getFilmDays() {
+  const today = new Date()
+  return Array.from({ length: 4 }, (_, i) => {
+    const d = new Date(today)
+    d.setDate(today.getDate() - (3 - i)) // oldest first: today-3 … today
+    const daysAgo = 3 - i
+
+    const date = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toLowerCase()
+    const label =
+      daysAgo === 0 ? 'Today'
+      : daysAgo === 1 ? 'Yesterday'
+      : `${daysAgo} days ago`
+
+    const colors = FILM_COLORS[i]
+    const videos = VIDEO_SLOTS[i]
+    const films = colors.map((c, fi) => ({ c, isVideo: videos.includes(fi) }))
+
+    return { date, label, films }
+  })
+}
+
+// Individual film day row
+function FilmDayRow({ day, index }: { day: ReturnType<typeof getFilmDays>[0]; index: number }) {
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ['start 95%', 'start 30%'],
   })
 
-  // Scroll-driven: starts below+blurred, rises up and sharpens
-  const rawY   = useTransform(scrollYProgress, [0, 1], [80, 0])
-  const rawOp  = useTransform(scrollYProgress, [0, 0.6], [0, 1])
-  const rawBlur= useTransform(scrollYProgress, [0, 0.7], [12, 0])
-  const rawSc  = useTransform(scrollYProgress, [0, 1], [0.88, 1])
-  const rawRot = useTransform(scrollYProgress, [0, 1], [index % 2 === 0 ? -3 : 3, 0])
+  const rawY    = useTransform(scrollYProgress, [0, 1], [80, 0])
+  const rawOp   = useTransform(scrollYProgress, [0, 0.6], [0, 1])
+  const rawBlur = useTransform(scrollYProgress, [0, 0.7], [12, 0])
+  const rawSc   = useTransform(scrollYProgress, [0, 1], [0.88, 1])
+  const rawRot  = useTransform(scrollYProgress, [0, 1], [index % 2 === 0 ? -3 : 3, 0])
 
-  const y    = useSpring(rawY,  { stiffness: 60, damping: 18 })
-  const sc   = useSpring(rawSc, { stiffness: 60, damping: 18 })
+  const y    = useSpring(rawY,    { stiffness: 60, damping: 18 })
+  const sc   = useSpring(rawSc,   { stiffness: 60, damping: 18 })
   const blur = useSpring(rawBlur, { stiffness: 50, damping: 15 })
   const blurFilter = useTransform(blur, v => `blur(${v}px)`)
 
@@ -107,6 +104,9 @@ function FilmDayRow({ day, index }: { day: typeof filmDays[0]; index: number }) 
 }
 
 export default function FilmsSection() {
+  // useMemo so dates are computed once per mount, not re-derived on every render
+  const filmDays = useMemo(() => getFilmDays(), [])
+
   const headerRef = useRef<HTMLDivElement>(null)
   const { scrollYProgress: headerScroll } = useScroll({
     target: headerRef,
@@ -126,7 +126,7 @@ export default function FilmsSection() {
     <section id="films" ref={sectionRef} className="relative py-20 sm:py-28 px-5 sm:px-8 bg-[#FDFCF0]">
       <div className="max-w-4xl mx-auto">
 
-        {/* Header — scroll-driven reveal */}
+        {/* Header */}
         <div ref={headerRef} className="mb-16 sm:mb-20">
           <motion.div style={{ y: headerY, opacity: headerOp }}>
             <span className="label-tag block mb-4">Films of My Day</span>
@@ -142,7 +142,7 @@ export default function FilmsSection() {
           </motion.div>
         </div>
 
-        {/* Timeline with scroll-driven row reveals */}
+        {/* Timeline */}
         <div className="relative">
           {/* Vertical spine */}
           <div className="absolute left-1/2 -translate-x-px top-0 bottom-0 w-px bg-[rgba(67,61,53,0.08)]">
