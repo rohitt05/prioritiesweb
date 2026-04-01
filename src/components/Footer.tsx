@@ -14,7 +14,9 @@ const FACE_SVGS = [
   `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="32" fill="#FDFCF0"/><ellipse cx="32" cy="38" rx="16" ry="14" fill="#FDDBB4"/><ellipse cx="32" cy="28" rx="13" ry="13" fill="#FDDBB4"/><path d="M19 26 Q18 16 32 15 Q46 16 45 26 Q43 18 32 18 Q21 18 19 26Z" fill="#4A2912"/><circle cx="26" cy="30" r="1.5" fill="#2C1A0E"/><circle cx="38" cy="30" r="1.5" fill="#2C1A0E"/><path d="M27 36 Q32 40 37 36" stroke="#C17B6B" stroke-width="2" stroke-linecap="round" fill="none"/><ellipse cx="24" cy="35" rx="3.5" ry="2" fill="#F4A0A0" opacity="0.45"/><ellipse cx="40" cy="35" rx="3.5" ry="2" fill="#F4A0A0" opacity="0.45"/></svg>`,
 ]
 
-const FRIENDS_DATA = [
+// Base radii at 800px canvas width — scale proportionally
+const BASE_W = 800
+const FRIENDS_BASE = [
   { faceIdx: 0, label: 'the creative one', r: 56 },
   { faceIdx: 1, label: 'the fun one',       r: 64 },
   { faceIdx: 2, label: 'the smart one',     r: 50 },
@@ -25,15 +27,15 @@ const FRIENDS_DATA = [
   { faceIdx: 0, label: 'the wise one',      r: 58 },
   { faceIdx: 2, label: 'your person',       r: 52 },
 ]
-const YOU_DATA = { faceIdx: 6, label: 'you', r: 70 }
-const ALL_DATA = [...FRIENDS_DATA, YOU_DATA]
+const YOU_BASE = { faceIdx: 6, label: 'you', r: 70 }
 
-const CANVAS_H = 380
+const CANVAS_H = 420
 
 function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
   const canvasRef  = useRef<HTMLCanvasElement>(null)
   const startedRef = useRef(false)
   const rafRef     = useRef<number>(0)
+  const draggingRef = useRef(false)
 
   useEffect(() => {
     if (!trigger || startedRef.current || width === 0) return
@@ -41,8 +43,14 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
 
     const canvas = canvasRef.current
     if (!canvas) return
-    canvas.width  = width
-    canvas.height = CANVAS_H
+
+    // Scale factor based on actual width
+    const scale = Math.max(0.45, Math.min(1.2, width / BASE_W))
+
+    const W = width
+    const H = CANVAS_H
+    canvas.width  = W
+    canvas.height = H
 
     const imgs: HTMLImageElement[] = []
     FACE_SVGS.forEach((svg, i) => {
@@ -51,25 +59,32 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
       imgs[i] = img
     })
 
+    const ALL_DATA = [
+      ...FRIENDS_BASE.map(d => ({ ...d, r: Math.round(d.r * scale) })),
+      { ...YOU_BASE,   r: Math.round(YOU_BASE.r * scale) },
+    ]
+    const FRIENDS_COUNT = FRIENDS_BASE.length
+
     import('matter-js').then((M) => {
-      const { Engine, Runner, Bodies, Composite, Mouse, MouseConstraint } = M
+      const { Engine, Runner, Bodies, Composite, Body, Events, Mouse, MouseConstraint } = M
       const engine = Engine.create({ gravity: { y: 2.2 } })
 
       const wo = { isStatic: true, render: { visible: false }, friction: 0.4, restitution: 0.2 }
+      // walls: floor + left + right — NO ceiling wall so avatars can fly up freely
       Composite.add(engine.world, [
-        Bodies.rectangle(width / 2, CANVAS_H + 25, width + 200, 50,         wo),
-        Bodies.rectangle(-25,        CANVAS_H / 2,  50,          CANVAS_H * 3, wo),
-        Bodies.rectangle(width + 25, CANVAS_H / 2,  50,          CANVAS_H * 3, wo),
+        Bodies.rectangle(W / 2, H + 25,  W + 200, 50,    wo),
+        Bodies.rectangle(-25,   H / 2,   50, H * 4,      wo),
+        Bodies.rectangle(W + 25, H / 2,  50, H * 4,      wo),
       ])
 
       const bodies = ALL_DATA.map((d, i) => {
         const isYou = i === ALL_DATA.length - 1
         const xPos  = isYou
-          ? width / 2
-          : d.r + (i / (FRIENDS_DATA.length - 1)) * (width - d.r * 2)
-        const startY = -(i * 140 + d.r + 200)
+          ? W / 2
+          : d.r + (i / (FRIENDS_COUNT - 1)) * (W - d.r * 2)
+        const startY = -(i * 120 * scale + d.r + 160)
         const body = Bodies.circle(xPos, startY, d.r, {
-          restitution: 0.28, friction: 0.5, frictionAir: 0.008, density: 0.004,
+          restitution: 0.3, friction: 0.5, frictionAir: 0.01, density: 0.004,
           render: { visible: false },
         })
         ;(body as any).__faceIdx = d.faceIdx
@@ -80,22 +95,53 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
       })
       Composite.add(engine.world, bodies)
 
+      // Mouse: attach to canvas, remove wheel listener immediately
       const mouse = Mouse.create(canvas)
-      ;(mouse as any).element.removeEventListener('wheel', (mouse as any).mousewheel)
+      const mouseEl = (mouse as any).element as HTMLElement
+      const noop = () => {}
+      mouseEl.removeEventListener('wheel',      (mouse as any).mousewheel)
+      mouseEl.removeEventListener('mousewheel', (mouse as any).mousewheel)
+      mouseEl.addEventListener('wheel',         noop, { passive: true })
+
       const mc = MouseConstraint.create(engine, {
         mouse,
-        constraint: { stiffness: 0.18, render: { visible: false } },
+        constraint: { stiffness: 0.25, damping: 0.1, render: { visible: false } },
       })
       Composite.add(engine.world, mc)
 
-      canvas.addEventListener('wheel', () => {}, { passive: true })
+      // Track whether user is actively dragging to gate scroll block
+      Events.on(mc, 'startdrag', () => { draggingRef.current = true })
+      Events.on(mc, 'enddrag',   () => { draggingRef.current = false })
 
       Runner.run(Runner.create(), engine)
 
       const ctx = canvas.getContext('2d')!
+
+      function drawTextOverlay() {
+        // "me and my 9 idiots" heading
+        const titleSize = Math.max(14, Math.round(28 * scale))
+        ctx.save()
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'top'
+        // main text
+        ctx.font = `700 ${titleSize}px Georgia,serif`
+        ctx.fillStyle = 'rgba(245,240,232,0.08)'
+        ctx.fillText('me and my 9 idiots', W / 2, 22)
+        // sub text
+        const subSize = Math.max(10, Math.round(11 * scale))
+        ctx.font = `400 ${subSize}px Inter,sans-serif`
+        ctx.fillStyle = 'rgba(245,240,232,0.04)'
+        ctx.letterSpacing = '0.12em'
+        ctx.fillText('YOUR WHOLE WORLD, IN ONE APP', W / 2, 22 + titleSize + 6)
+        ctx.restore()
+      }
+
       function draw() {
         rafRef.current = requestAnimationFrame(draw)
-        ctx.clearRect(0, 0, width, CANVAS_H)
+        ctx.clearRect(0, 0, W, H)
+
+        drawTextOverlay()
+
         Composite.allBodies(engine.world).forEach((body: any) => {
           if (body.isStatic) return
           const { x, y } = body.position
@@ -115,21 +161,22 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
 
           ctx.save(); ctx.translate(x, y)
           if (isYou) {
-            ctx.beginPath(); ctx.arc(0, 0, r + 12, 0, Math.PI * 2)
-            ctx.strokeStyle = 'rgba(212,163,115,0.18)'; ctx.lineWidth = 18; ctx.stroke()
+            ctx.beginPath(); ctx.arc(0, 0, r + 10 * scale, 0, Math.PI * 2)
+            ctx.strokeStyle = 'rgba(212,163,115,0.18)'; ctx.lineWidth = 16 * scale; ctx.stroke()
             ctx.beginPath(); ctx.arc(0, 0, r + 3,  0, Math.PI * 2)
-            ctx.strokeStyle = '#D4A373';                ctx.lineWidth = 3.5; ctx.stroke()
+            ctx.strokeStyle = '#D4A373'; ctx.lineWidth = 3; ctx.stroke()
           } else {
             ctx.beginPath(); ctx.arc(0, 0, r + 1.5, 0, Math.PI * 2)
-            ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 2.5; ctx.stroke()
+            ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 2; ctx.stroke()
           }
           ctx.restore()
 
+          const labelSize = Math.max(8, Math.round(r * 0.20))
           ctx.save(); ctx.translate(x, y)
-          ctx.font = `${isYou ? 700 : 500} ${Math.max(9, r * 0.19)}px Inter,sans-serif`
+          ctx.font = `${isYou ? 700 : 500} ${labelSize}px Inter,sans-serif`
           ctx.fillStyle = isYou ? '#C17B6B' : 'rgba(80,74,68,0.9)'
           ctx.textAlign = 'center'; ctx.textBaseline = 'top'
-          ctx.fillText(isYou ? 'YOU' : label, 0, r + 6)
+          ctx.fillText(isYou ? 'YOU' : label, 0, r + 5)
           ctx.restore()
         })
       }
@@ -140,12 +187,26 @@ function PhysicsStage({ trigger, width }: { trigger: boolean; width: number }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trigger, width])
 
+  // Block scroll only while actively dragging an avatar
+  useEffect(() => {
+    const onWheel = (e: WheelEvent) => {
+      if (draggingRef.current) e.stopPropagation()
+    }
+    const canvas = canvasRef.current
+    canvas?.addEventListener('wheel', onWheel, { passive: true })
+    return () => canvas?.removeEventListener('wheel', onWheel)
+  }, [])
+
   return (
     <canvas
       ref={canvasRef}
       style={{
-        display: 'block', width: '100%', height: CANVAS_H,
-        background: 'transparent', cursor: 'grab',
+        display: 'block',
+        width: '100%',
+        height: CANVAS_H,
+        background: 'transparent',
+        cursor: 'grab',
+        touchAction: 'pan-y', // allow vertical scroll touch; horizontal handled by matter
       }}
     />
   )
@@ -157,8 +218,9 @@ function AnimatedBlock({ inView }: { inView: boolean }) {
 
   useEffect(() => {
     if (!blockRef.current) return
-    setWidth(blockRef.current.offsetWidth)
-    const ro = new ResizeObserver(([e]) => setWidth(e.contentRect.width))
+    const update = () => setWidth(blockRef.current!.offsetWidth)
+    update()
+    const ro = new ResizeObserver(update)
     ro.observe(blockRef.current)
     return () => ro.disconnect()
   }, [])
@@ -166,7 +228,7 @@ function AnimatedBlock({ inView }: { inView: boolean }) {
   return (
     <div
       ref={blockRef}
-      style={{ width: '100%', height: CANVAS_H, background: '#0e0d0b', overflow: 'hidden' }}
+      style={{ width: '100%', height: CANVAS_H, background: '#0e0d0b', overflow: 'hidden', position: 'relative' }}
     >
       <PhysicsStage trigger={inView} width={width} />
     </div>
@@ -189,19 +251,6 @@ export default function Footer() {
           <div className="max-w-[220px]">
             <span className="font-serif italic text-[26px] font-bold text-[#F5F0E8] block mb-2">priorities</span>
             <p className="text-xs leading-relaxed text-[#4A4540] mb-4">9 people. Real moments. No noise.</p>
-            {/* me and my 9 idiots */}
-            <p style={{
-              fontFamily: 'Georgia,serif',
-              fontStyle: 'italic',
-              fontSize: '13px',
-              color: '#3A3530',
-              lineHeight: 1.6,
-              letterSpacing: '0.01em',
-            }}>
-              me and my{' '}
-              <span style={{ color: '#6B4035', fontWeight: 600 }}>9 idiots</span>
-              <span style={{ display: 'block', fontSize: '11px', color: '#2E2C29', marginTop: '4px', fontStyle: 'normal', letterSpacing: '0.08em', textTransform: 'uppercase' }}>your whole world, in one app</span>
-            </p>
           </div>
 
           {/* links */}
@@ -234,7 +283,7 @@ export default function Footer() {
 
         </div>
 
-        {/* bottom bar: tagline left — copyright right */}
+        {/* bottom bar */}
         <div className="mt-10 pt-6 border-t border-[#1c1b19] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <p style={{ fontFamily: 'Georgia,serif', fontStyle: 'italic', fontSize: '12px', color: '#3A3530', lineHeight: 1.55 }}>
             built with love, <span style={{ color: '#6B4035' }}>for love —</span> by your lover 🌸
@@ -243,10 +292,9 @@ export default function Footer() {
             © {year} Priorities. All rights reserved. Made with 🌸 in India.
           </p>
         </div>
-
       </div>
 
-      {/* physics — pure canvas */}
+      {/* physics canvas with text overlay */}
       <AnimatedBlock inView={inView} />
 
     </footer>
