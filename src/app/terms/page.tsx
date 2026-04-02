@@ -33,7 +33,7 @@ export default function TermsOfService() {
             <li>→ You own your content. We don&apos;t.</li>
             <li>→ Be respectful. Don&apos;t post harmful content.</li>
             <li>→ The 9-person limit is intentional and enforced.</li>
-            <li>→ Films delete themselves after 24 hours.</li>
+            <li>→ Films are stored on your profile for you and your priorities to revisit.</li>
             <li>→ You can delete your account and all data at any time.</li>
           </ul>
         </div>
@@ -89,9 +89,10 @@ export default function TermsOfService() {
             <p>We reserve the right to remove any content and suspend or terminate any account that violates these Terms. For severe violations (CSAM, credible threats), we act immediately and without prior notice. For lesser violations, we aim to warn first.</p>
           </Section>
 
-          <Section title="6. Films — 24-Hour Content">
-            <p>&ldquo;Films&rdquo; are photo or video posts that automatically and permanently delete from our servers after 24 hours. This deletion is enforced at the infrastructure level.</p>
-            <p>However, we cannot prevent other users within your priority circle from taking screenshots or screen recordings. You are responsible for what you choose to share.</p>
+          <Section title="6. Films">
+            <p>&ldquo;Films&rdquo; are photo or video posts you share with your priority circle. Films are stored securely on our servers and are displayed on your Profile Film — a personal archive visible only to you and the people you have added as priorities.</p>
+            <p>Films are not automatically deleted. They remain on your profile until you choose to remove them. You can delete any Film from within the app at any time, after which it will be permanently removed from our servers.</p>
+            <p>We cannot prevent other users within your priority circle from taking screenshots or screen recordings of your Films. You are responsible for what you choose to share.</p>
           </Section>
 
           <Section title="7. Privacy">
