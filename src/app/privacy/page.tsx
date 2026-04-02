@@ -43,7 +43,7 @@ export default function PrivacyPolicy() {
           <Section title="2. What We Collect">
             <h3 className="font-semibold text-[#2C2720] mt-4 mb-2">2.1 What you give us</h3>
             <ul className="list-disc pl-5 space-y-1">
-              <li>Account details: name, username, email address, phone number, date of birth</li>
+              <li>Account details: name, username, email address, phone number, date of birth, gender</li>
               <li>Profile information: avatar, bio, partner connections</li>
               <li>Content you create: Films (photos/videos), voice notes, messages, priority lists</li>
               <li>Your email address when you join our waitlist</li>
@@ -101,7 +101,6 @@ export default function PrivacyPolicy() {
           </Section>
 
           <Section title="6. Content & Retention">
-            <p><strong>Films (Stories):</strong> Automatically and permanently deleted from our servers exactly 24 hours after posting. This is enforced at the infrastructure level.</p>
             <p><strong>Messages & Voice Notes:</strong> Stored securely and accessible only to the conversation participants. You can delete any message from within the app at any time.</p>
             <p><strong>Profile data:</strong> Retained while your account is active. Deleted within 30 days of account deletion.</p>
             <p><strong>Waitlist emails:</strong> Used solely to notify you at launch. You can unsubscribe at any time.</p>
