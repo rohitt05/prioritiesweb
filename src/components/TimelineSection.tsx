@@ -1,6 +1,10 @@
 'use client'
 import { useRef } from 'react'
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion'
+import { motion, useScroll, useTransform, cubicBezier } from 'framer-motion'
+
+// Custom ease — matches iOS UIKit default spring feel but as a cubic bezier
+// (no actual spring physics = no trailing lag on scroll)
+const EASE_OUT = cubicBezier(0.16, 1, 0.3, 1)
 
 const items = [
   { date: 'Mar 30', title: 'Gateway trip 🚢', desc: '2 films from the boat', color: '#C9E6EE', emoji: '⛵' },
@@ -12,43 +16,61 @@ const items = [
 
 function TimelineCard({ item, index }: { item: typeof items[0]; index: number }) {
   const ref = useRef<HTMLDivElement>(null)
+
   const { scrollYProgress } = useScroll({
     target: ref,
-    offset: ['start 95%', 'start 35%'],
+    // Wider range = more scroll distance to complete the reveal = feels slower + intentional
+    offset: ['start 92%', 'start 28%'],
   })
-  const rawY  = useTransform(scrollYProgress, [0, 1], [60, 0])
-  const rawOp = useTransform(scrollYProgress, [0, 0.65], [0, 1])
-  const rawX  = useTransform(scrollYProgress, [0, 1], [index % 2 === 0 ? -35 : 35, 0])
-  const rawBl = useTransform(scrollYProgress, [0, 0.7], [10, 0])
 
-  const y   = useSpring(rawY,  { stiffness: 65, damping: 18 })
-  const x   = useSpring(rawX,  { stiffness: 65, damping: 18 })
-  const bl  = useSpring(rawBl, { stiffness: 50, damping: 15 })
-  const blF = useTransform(bl, v => `blur(${v}px)`)
-  const dotScale = useTransform(scrollYProgress, [0, 0.4], [0, 1])
+  // All transforms use easing, NOT useSpring.
+  // useTransform with easing = positionally exact + feels smooth.
+  const y = useTransform(scrollYProgress, [0, 1], [40, 0], { ease: EASE_OUT })
+  const op = useTransform(scrollYProgress, [0, 0.45], [0, 1], { ease: EASE_OUT })
+  // X alternation: left cards enter from left, right from right
+  const x = useTransform(scrollYProgress, [0, 1], [index % 2 === 0 ? -28 : 28, 0], { ease: EASE_OUT })
+  // Dot: pops in with a tight window
+  const dotScale = useTransform(scrollYProgress, [0, 0.35], [0, 1], { ease: EASE_OUT })
+  // Card scale: very subtle — just enough to feel "landing"
+  const sc = useTransform(scrollYProgress, [0, 0.6], [0.97, 1], { ease: EASE_OUT })
 
   return (
     <motion.div
       ref={ref}
       className="relative mb-6 sm:mb-8"
-      style={{ y, x, opacity: rawOp, filter: blF }}
+      // NO filter: blur here — blur runs on CPU, tanks mobile FPS.
+      // opacity + y + scale on GPU via transform: all compositor-only.
+      style={{ y, x, opacity: op, scale: sc }}
     >
-      {/* Dot */}
+      {/* Timeline dot */}
       <motion.div
-        className="absolute -left-10 top-4"
+        className="absolute -left-10 top-4 origin-center"
         style={{ scale: dotScale }}
       >
         <div className="w-2.5 h-2.5 rounded-full bg-[#D4A373] border-2 border-[#FDFCF0] shadow-[0_0_0_2px_#D4A373]" />
       </motion.div>
 
+      {/* Card — hover is interaction-driven so useSpring IS correct here */}
       <motion.div
         className="card p-4 sm:p-5 flex items-start gap-3 sm:gap-4 cursor-default"
-        whileHover={{ y: -5, scale: 1.015, transition: { duration: 0.2 } }}
+        whileHover={{
+          y: -4,
+          scale: 1.012,
+          transition: { type: 'spring', stiffness: 340, damping: 28 },
+        }}
+        whileTap={{
+          scale: 0.985,
+          transition: { type: 'spring', stiffness: 400, damping: 30 },
+        }}
       >
         <motion.div
           className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0"
           style={{ background: item.color }}
-          whileHover={{ rotate: 10, scale: 1.12, transition: { duration: 0.2 } }}
+          whileHover={{
+            rotate: 8,
+            scale: 1.1,
+            transition: { type: 'spring', stiffness: 400, damping: 20 },
+          }}
         >
           {item.emoji}
         </motion.div>
@@ -64,26 +86,30 @@ function TimelineCard({ item, index }: { item: typeof items[0]; index: number })
 
 export default function TimelineSection() {
   const sectionRef = useRef(null)
-  const headerRef  = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLDivElement>(null)
 
+  // ── Timeline line ─────────────────────────────────────────────────────────
   const { scrollYProgress: lineScroll } = useScroll({
     target: sectionRef,
     offset: ['start end', 'end start'],
   })
-  const lineH = useTransform(lineScroll, [0.05, 0.95], ['0%', '100%'])
+  const lineH = useTransform(lineScroll, [0.05, 0.92], ['0%', '100%'], { ease: EASE_OUT })
 
+  // ── Header ────────────────────────────────────────────────────────────────
   const { scrollYProgress: headerScroll } = useScroll({
     target: headerRef,
-    offset: ['start 90%', 'start 20%'],
+    offset: ['start 88%', 'start 15%'],
   })
-  const hY  = useSpring(useTransform(headerScroll, [0, 1], [50, 0]), { stiffness: 55, damping: 18 })
-  const hOp = useTransform(headerScroll, [0, 0.6], [0, 1])
-  const hSc = useSpring(useTransform(headerScroll, [0, 1], [0.9, 1]), { stiffness: 55, damping: 18 })
+  // Direct useTransform — no useSpring wrapper
+  const hY = useTransform(headerScroll, [0, 1], [44, 0], { ease: EASE_OUT })
+  const hOp = useTransform(headerScroll, [0, 0.55], [0, 1], { ease: EASE_OUT })
+  const hSc = useTransform(headerScroll, [0, 0.8], [0.93, 1], { ease: EASE_OUT })
 
   return (
     <section id="timeline" ref={sectionRef} className="relative py-20 sm:py-28 px-5 sm:px-8 bg-[#FDFCF0]">
       <div className="max-w-3xl mx-auto">
-        {/* Header — scroll-driven zoom+rise */}
+
+        {/* Header */}
         <div ref={headerRef} className="mb-16 sm:mb-20">
           <motion.div style={{ y: hY, opacity: hOp, scale: hSc }}>
             <span className="label-tag block mb-4">Timeline</span>
@@ -100,9 +126,12 @@ export default function TimelineSection() {
         </div>
 
         <div className="relative pl-8 sm:pl-10">
-          {/* Line track */}
+          {/* Growing line */}
           <div className="absolute left-2 sm:left-3 top-0 bottom-0 w-px bg-[rgba(67,61,53,0.07)]">
-            <motion.div className="absolute top-0 left-0 w-full bg-[#D4A373]" style={{ height: lineH }} />
+            <motion.div
+              className="absolute top-0 left-0 w-full bg-[#D4A373]"
+              style={{ height: lineH }}
+            />
           </div>
 
           {items.map((item, i) => (

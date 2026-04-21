@@ -2,25 +2,8 @@
 import { useRef } from 'react'
 import { motion, useInView, useScroll, useTransform } from 'framer-motion'
 
-const notForPills = [
-  { icon: '🌍', line: 'Your follower count' },
-  { icon: '📢', line: 'The highlight reel' },
-  { icon: '🔔', line: 'Notifications from strangers' },
-  { icon: '🤳', line: 'Looking good for the internet' },
-  { icon: '📈', line: 'Going viral' },
-  { icon: '👀', line: 'Who viewed your story' },
-]
-
-const forLines = [
-  { emoji: '🫀', text: 'The 2am text you actually mean' },
-  { emoji: '📸', text: 'The photo you only send to one person' },
-  { emoji: '🎙️', text: 'A voice note that sounds like a hug' },
-  { emoji: '🗓️', text: 'Every small moment that becomes a memory' },
-  { emoji: '🔒', text: 'A space that belongs only to you two' },
-]
-
 export default function PositioningSection() {
-  const ref    = useRef(null)
+  const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-80px' })
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
   const bgY = useTransform(scrollYProgress, [0, 1], ['-5%', '5%'])
@@ -34,9 +17,9 @@ export default function PositioningSection() {
             style={{
               width: 200 + i * 140, height: 200 + i * 140,
               background: c, opacity: 0.07, filter: 'blur(70px)',
-              top:   i === 0 ? '-15%' : i === 1 ? '50%' : '20%',
-              left:  i === 0 ? '-8%'  : undefined,
-              right: i !== 0 ? '-8%'  : undefined,
+              top: i === 0 ? '-15%' : i === 1 ? '50%' : '20%',
+              left: i === 0 ? '-8%' : undefined,
+              right: i !== 0 ? '-8%' : undefined,
             }}
             animate={{ scale: [1, 1.1, 1] }}
             transition={{ delay: i * 0.7, duration: 12, repeat: Infinity, ease: 'easeInOut' }}
@@ -68,68 +51,11 @@ export default function PositioningSection() {
           </motion.p>
         </motion.div>
 
-        {/* ── NOT for pills ── */}
-        <motion.div
-          className="flex flex-wrap gap-2 sm:gap-3 justify-center mb-10 sm:mb-14"
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.2, duration: 0.7 }}
-        >
-          {notForPills.map((p, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={inView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ delay: 0.25 + i * 0.08, duration: 0.5 }}
-              className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-white/[0.05] border border-white/[0.08]"
-            >
-              <span className="text-base">{p.icon}</span>
-              <span className="text-[12px] sm:text-[13px] text-white/30 line-through">{p.line}</span>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* ── Serif divider ── */}
-        <motion.div
-          initial={{ opacity: 0, scaleX: 0 }}
-          animate={inView ? { opacity: 1, scaleX: 1 } : {}}
-          transition={{ delay: 0.6, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="flex items-center gap-4 mb-10 sm:mb-12"
-        >
-          <div className="flex-1 h-px bg-white/10" />
-          <span className="font-serif italic text-[#D4A373] text-[16px] sm:text-[20px] whitespace-nowrap">
-            but it is for this.
-          </span>
-          <div className="flex-1 h-px bg-white/10" />
-        </motion.div>
-
-        {/* ── FOR lines — CENTERED ── */}
-        <div className="flex flex-col items-center gap-4 sm:gap-5 mb-12 sm:mb-16">
-          {forLines.map((line, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 24, filter: 'blur(4px)' }}
-              animate={inView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
-              transition={{ delay: 0.65 + i * 0.1, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="flex items-center gap-3 sm:gap-4 group justify-center"
-            >
-              <motion.span
-                className="text-xl sm:text-2xl flex-shrink-0"
-                animate={{ rotate: [0, 6, -6, 0] }}
-                transition={{ delay: i * 1.2, duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-              >{line.emoji}</motion.span>
-              <span className="text-[15px] sm:text-[18px] font-serif italic text-[#FDFCF0] leading-snug group-hover:text-[#D4A373] transition-colors duration-300 text-center">
-                {line.text}
-              </span>
-            </motion.div>
-          ))}
-        </div>
-
         {/* ── Manifesto card ── */}
         <motion.div
-          initial={{ opacity: 0, y: 36, filter: 'blur(8px)' }}
-          animate={inView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
-          transition={{ delay: 1.1, duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          initial={{ opacity: 0, y: 36 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.4, duration: 1, ease: [0.16, 1, 0.3, 1] }}
           className="rounded-2xl sm:rounded-3xl bg-white/[0.04] border border-white/[0.09] px-6 sm:px-12 py-10 sm:py-14"
         >
           <div className="text-center mb-4">
@@ -153,6 +79,7 @@ export default function PositioningSection() {
             <span className="w-1.5 h-1.5 rounded-full bg-[#D4A373] animate-pulse" />
           </div>
         </motion.div>
+
       </div>
     </section>
   )
