@@ -102,6 +102,8 @@ function PhysicsStage({ trigger, width, height }: { trigger: boolean; width: num
   const startedRef = useRef(false)
   const rafRef = useRef<number>(0)
   const cleanupRef = useRef<(() => void) | null>(null)
+  // track whether user is actively dragging a ball
+  const isDraggingRef = useRef(false)
 
   useEffect(() => {
     if (!trigger || startedRef.current || width === 0 || height === 0) return
@@ -110,19 +112,15 @@ function PhysicsStage({ trigger, width, height }: { trigger: boolean; width: num
     const canvas = canvasRef.current
     if (!canvas) return
 
-    // ── Fix #5: DPR-aware canvas ──────────────────────────────────────────
-    const dpr = Math.min(window.devicePixelRatio || 1, 2) // cap at 2 — 3× is overkill
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
     const W = width
     const H = height
     canvas.width = W * dpr
     canvas.height = H * dpr
     canvas.style.width = `${W}px`
     canvas.style.height = `${H}px`
-    // ─────────────────────────────────────────────────────────────────────
 
-    // ── Fix #1: scale is based on CSS pixels, not buffer pixels ──────────
     const scale = Math.max(0.38, Math.min(1.15, W / BASE_W))
-    // ─────────────────────────────────────────────────────────────────────
 
     const imgs: HTMLImageElement[] = []
     FACE_SVGS.forEach((svg, i) => {
@@ -139,19 +137,15 @@ function PhysicsStage({ trigger, width, height }: { trigger: boolean; width: num
     import('matter-js').then((M) => {
       const { Engine, Runner, Bodies, Composite, Events, Mouse, MouseConstraint } = M
 
-      // ── Fix #3: more air friction, lower gravity ──────────────────────
       const engine = Engine.create({ gravity: { y: 1.6 } })
-      // ─────────────────────────────────────────────────────────────────
 
       const wo = { isStatic: true, render: { visible: false }, friction: 0.5, restitution: 0.2 }
 
-      // ── Fix #1: walls use CSS pixel coords (physics world = CSS pixels) ─
       Composite.add(engine.world, [
-        Bodies.rectangle(W / 2, H + 25, W + 200, 60, wo), // floor
-        Bodies.rectangle(-25, H / 2, 50, H * 4, wo), // left wall
-        Bodies.rectangle(W + 25, H / 2, 50, H * 4, wo), // right wall
+        Bodies.rectangle(W / 2, H + 25, W + 200, 60, wo),
+        Bodies.rectangle(-25, H / 2, 50, H * 4, wo),
+        Bodies.rectangle(W + 25, H / 2, 50, H * 4, wo),
       ])
-      // ──────────────────────────────────────────────────────────────────
 
       const FRIENDS_COUNT = FRIENDS_BASE.length
       const bodies = ALL_DATA.map((d, i) => {
@@ -160,17 +154,14 @@ function PhysicsStage({ trigger, width, height }: { trigger: boolean; width: num
           ? W / 2
           : d.r * 1.2 + (i / (FRIENDS_COUNT - 1)) * (W - d.r * 2.4)
 
-        // ── Fix #2: much shallower drop — max 2 screens above, not 6 ────
         const startY = -(d.r + 40 + i * Math.min(80, 60 * scale))
-        // ──────────────────────────────────────────────────────────────
 
         const body = Bodies.circle(xPos, startY, d.r, {
           restitution: 0.28,
           friction: 0.5,
-          frictionAir: 0.028, // Fix #3: was 0.009
+          frictionAir: 0.028,
           density: 0.004,
           render: { visible: false },
-          // Fix tunneling: Matter.js sleepThreshold + no CCD but smaller drops prevent it
           collisionFilter: { category: 0x0001, mask: 0x0001 },
         })
           ; (body as any).__faceIdx = d.faceIdx
@@ -181,17 +172,13 @@ function PhysicsStage({ trigger, width, height }: { trigger: boolean; width: num
       })
       Composite.add(engine.world, bodies)
 
-      // ── Fix #4: proper touch support for mouse constraint ─────────────
       const mouse = Mouse.create(canvas)
-
-        // Correct DPR offset so touch coords map to physics world (CSS pixels)
         ; (mouse as any).pixelRatio = dpr
 
       const mouseEl = (mouse as any).element as HTMLElement
       mouseEl.removeEventListener('wheel', (mouse as any).mousewheel)
       mouseEl.removeEventListener('mousewheel', (mouse as any).mousewheel)
       mouseEl.addEventListener('wheel', () => { }, { passive: true })
-      // ─────────────────────────────────────────────────────────────────
 
       const mc = MouseConstraint.create(engine, {
         mouse,
@@ -199,13 +186,22 @@ function PhysicsStage({ trigger, width, height }: { trigger: boolean; width: num
       })
       Composite.add(engine.world, mc)
 
+      // ── Scroll fix: only block touch scroll when actually dragging a ball ──
+      Events.on(mc, 'startdrag', () => {
+        isDraggingRef.current = true
+        canvas.style.touchAction = 'none'
+      })
+      Events.on(mc, 'enddrag', () => {
+        isDraggingRef.current = false
+        canvas.style.touchAction = 'pan-y'
+      })
+      // ───────────────────────────────────────────────────────────────────────
+
       const runner = Runner.create()
       Runner.run(runner, engine)
 
-      // ── Fix #5: DPR-scaled canvas draw context ────────────────────────
       const ctx = canvas.getContext('2d')!
-      ctx.scale(dpr, dpr) // all draw calls now use CSS pixel coords
-      // ─────────────────────────────────────────────────────────────────
+      ctx.scale(dpr, dpr)
 
       function draw() {
         rafRef.current = requestAnimationFrame(draw)
@@ -220,7 +216,6 @@ function PhysicsStage({ trigger, width, height }: { trigger: boolean; width: num
           const isYou: boolean = body.__isYou
           if (r === undefined) return
 
-          // Skip drawing balls that are completely off-canvas (below floor or sideways)
           if (y > H + r * 2 || x < -r * 2 || x > W + r * 2) return
 
           ctx.save()
@@ -292,9 +287,9 @@ function PhysicsStage({ trigger, width, height }: { trigger: boolean; width: num
         height: '100%',
         background: 'transparent',
         cursor: 'grab',
-        // Fix #4: 'none' lets Matter get ALL touch events; page scroll still
-        // works because Matter doesn't preventDefault on non-drag touches
-        touchAction: 'none',
+        // pan-y by default so vertical scroll always works on mobile.
+        // switched to 'none' only while actively dragging a ball (via Matter events above)
+        touchAction: 'pan-y',
       }}
     />
   )
