@@ -1,291 +1,333 @@
 'use client'
-import { useRef, useEffect, useState } from 'react'
-import { motion, useScroll, useTransform, useSpring, AnimatePresence, MotionValue } from 'framer-motion'
+import { useRef } from 'react'
+import {
+  motion,
+  useScroll,
+  useTransform,
+  MotionValue,
+} from 'framer-motion'
 
-// ─── App palette ────────────────────────────────────────────────────────────────────────
-const P = [
-  '#B8C88D','#E9DFB4','#EFBFB3','#A8E6CF','#DDEDC4',
-  '#FFD4B8','#FFADAD','#C9E6EE','#FAD1D8','#F2C4D6',
-  '#DBC0E7','#F0B2C7','#F0C7DB','#b6e3f4','#c0aede',
-  '#ffdfbf','#d1d4f9','#ffd5dc','#f8c8dc','#a8d8ea',
-  '#e0bbe4','#fec8d8','#d291bc','#fff2cc','#b9fbc0',
-  '#ffc6ff','#fdffb6','#bdb2ff','#a0c4ff','#caffbf',
-  '#9bf6ff','#ffc8dd','#d0f4de','#e4c1f9','#ffadad',
-]
-
-// Photo seeds for film circles
-const PHOTO_SEEDS = [
-  'moment1','moment2','moment3','moment4','moment5',
-  'moment6','moment7','moment8','moment9','moment10',
-  'portrait1','portrait2','portrait3','life1','life2',
-]
-
-// ─── Per-scene config ───────────────────────────────────────────────────────────────────
-const SCENE_BG = [
-  { bg: '#F5F0E8', glow: 'rgba(233,223,180,0.60)' },
-  { bg: '#EEEAF8', glow: 'rgba(193,174,222,0.55)' },
-  { bg: '#EBF5F0', glow: 'rgba(168,230,207,0.55)' },
-  { bg: '#F5EBF0', glow: 'rgba(242,196,214,0.55)' },
-  { bg: '#F8F0F4', glow: 'rgba(240,178,199,0.55)' },
-]
-
+// ─── Scene data ────────────────────────────────────────────────────────────────────
 const SCENES = [
   {
-    label: 'Be the main character',
-    icon: null, bigHeading: true,
-    heading: 'Life is a movie.',
-    body: 'Not every scene needs an audience —',
-    bodyEm: 'just the ones who matter.',
-    sub: null,
-    textColor: '#2C2416', bodyColor: '#7A6E5F', accentColor: '#83934D',
+    act: 'ACT I',
+    kicker: 'Be the main character',
+    lineA: 'Life is',
+    lineB: 'a movie.',
+    italic: true,
+    body: 'Not every scene needs an audience — just the ones who matter.',
+    light: '#C8B87A',   // warm gold spotlight
+    textA: '#F5EDD8',
+    textB: '#D4A373',
   },
   {
-    label: null, icon: '🔒', bigHeading: false,
-    heading: 'No algorithm.',
-    body: 'Your feed is yours.', bodyEm: null,
-    sub: 'Nobody decides what you see, what you miss, or who you become.',
-    textColor: '#2A2040', bodyColor: '#6B5F80', accentColor: '#7B5EA7',
+    act: 'ACT II',
+    kicker: 'No middlemen',
+    lineA: 'No',
+    lineB: 'algorithm.',
+    italic: false,
+    body: 'Nobody decides what you see, what you miss, or who you become.',
+    light: '#A899D4',   // cool lavender spotlight
+    textA: '#EDE8F8',
+    textB: '#B8A8E4',
   },
   {
-    label: null, icon: '👁️', bigHeading: false,
-    heading: 'Only your circle sees.',
-    body: 'Every viewer is someone you chose.', bodyEm: null,
-    sub: 'What you share stays between the people you let in. Period.',
-    textColor: '#1A3028', bodyColor: '#4A7060', accentColor: '#44562F',
+    act: 'ACT III',
+    kicker: 'Your circle only',
+    lineA: 'Only your',
+    lineB: 'circle sees.',
+    italic: false,
+    body: 'Every viewer is someone you chose. What you share stays between the people you let in. Period.',
+    light: '#7ABFA0',   // sage green spotlight
+    textA: '#E4F4EE',
+    textB: '#89C9A8',
   },
   {
-    label: null, icon: '🚫', bigHeading: false,
-    heading: "Don't get lost in the crowd.",
-    body: 'No public feed. No strangers scrolling your life.', bodyEm: null,
-    sub: "You're not content. Your memories aren't for likes or algorithms.",
-    textColor: '#3A1828', bodyColor: '#7A4A60', accentColor: '#C45C7A',
+    act: 'ACT IV',
+    kicker: 'You are not content',
+    lineA: "Don't get",
+    lineB: 'lost.',
+    italic: false,
+    body: "No public feed. No strangers scrolling your life. You're not content.",
+    light: '#D48A9A',   // rose spotlight
+    textA: '#F4E4E8',
+    textB: '#E89AAA',
   },
   {
-    label: null, icon: '✨', bigHeading: false,
-    heading: 'No strangers, ever.',
-    body: 'Priorities keeps them where they belong —',
-    bodyEm: 'with the people you chose.',
-    sub: null,
-    textColor: '#2C2416', bodyColor: '#7A6E5F', accentColor: '#83934D',
+    act: 'ACT V',
+    kicker: 'Forever private',
+    lineA: 'No strangers,',
+    lineB: 'ever.',
+    italic: true,
+    body: 'Priorities keeps your moments with the people you chose. Always.',
+    light: '#C8B87A',
+    textA: '#F5EDD8',
+    textB: '#D4A373',
   },
-]
+] as const
 
-// ─── Types ───────────────────────────────────────────────────────────────────────────
-interface Particle {
-  id: number
-  x: number       // % from left
-  size: number    // px
-  color: string
-  duration: number  // seconds to float from bottom to top
-  delay: number
-  wobble: number  // horizontal wobble amplitude px
-  isFilm: boolean
-  seed?: string
-  opacity: number
+const N = SCENES.length
+
+// ─── Per-scene normalized progress (0 → 1) ─────────────────────────────────────
+// Safe to call inside component body (not in .map at top level)
+function useSceneProgress(raw: MotionValue<number>, i: number) {
+  return useTransform(raw, [i / N, (i + 1) / N], [0, 1])
 }
 
-let _uid = 0
-function mkParticle(isFilm = false): Particle {
-  const size = isFilm
-    ? 60 + Math.random() * 80   // film circles: 60–140px
-    : 12 + Math.random() * 60   // bubbles: 12–72px
-  return {
-    id:       ++_uid,
-    x:        5 + Math.random() * 90,
-    size,
-    color:    P[Math.floor(Math.random() * P.length)],
-    duration: isFilm
-      ? 14 + Math.random() * 10   // film: slower rise
-      : 8  + Math.random() * 10,  // bubble: faster
-    delay:    0,
-    wobble:   20 + Math.random() * 40,
-    isFilm,
-    seed:     isFilm ? PHOTO_SEEDS[Math.floor(Math.random() * PHOTO_SEEDS.length)] : undefined,
-    opacity:  isFilm ? 0.75 + Math.random() * 0.2 : 0.45 + Math.random() * 0.30,
-  }
-}
-
-// ─── Single rising particle ───────────────────────────────────────────────────────────────────────
-function RisingParticle({ p, onDone }: { p: Particle; onDone: (id: number) => void }) {
-  const viewH = typeof window !== 'undefined' ? window.innerHeight : 800
-  const travel = viewH + p.size + 40  // travel full viewport height + size
+// ─── Scene background spotlight ────────────────────────────────────────────────
+function SpotlightBg({ color, progress }: { color: string; progress: MotionValue<number> }) {
+  const opacity = useTransform(progress, [0, 0.2, 0.75, 1], [0, 1, 1, 0])
+  const x = useTransform(progress, [0, 0.2, 0.75, 1], ['-30%', '0%', '0%', '20%'])
 
   return (
     <motion.div
-      className="absolute pointer-events-none"
+      className="absolute inset-0"
       style={{
-        left: `${p.x}%`,
-        bottom: -p.size - 20,
-        width:  p.size,
-        height: p.size,
-        borderRadius: '50%',
+        opacity,
+        x,
+        background: `radial-gradient(ellipse 55% 70% at 38% 50%, ${color}18 0%, transparent 70%)`,
       }}
-      initial={{ y: 0, x: 0, opacity: 0, scale: 0.6 }}
-      animate={{
-        y:       [-0, -travel],
-        x:       [0, p.wobble, -p.wobble * 0.6, p.wobble * 0.4, 0],
-        opacity: [0, p.opacity, p.opacity, p.opacity * 0.6, 0],
-        scale:   [0.6, 1, 1, 0.9],
+    />
+  )
+}
+
+// ─── Large ambient act number in bg ───────────────────────────────────────────
+function AmbientNumber({ num, progress }: { num: string; progress: MotionValue<number> }) {
+  const opacity = useTransform(progress, [0, 0.25, 0.75, 1], [0, 0.06, 0.06, 0])
+  const scale = useTransform(progress, [0, 0.2, 0.8, 1], [0.88, 1, 1, 1.05])
+
+  return (
+    <motion.div
+      className="absolute right-[-2vw] bottom-[-4vw] font-serif select-none pointer-events-none leading-none"
+      style={{
+        opacity,
+        scale,
+        fontSize: 'clamp(180px, 28vw, 380px)',
+        color: '#ffffff',
+        fontStyle: 'italic',
       }}
-      transition={{
-        duration: p.duration,
-        ease: 'easeInOut',
-        times:   [0, 0.08, 0.7, 0.88, 1],
-        x: { duration: p.duration, ease: 'easeInOut', times: [0, 0.25, 0.5, 0.75, 1] },
-      }}
-      onAnimationComplete={() => onDone(p.id)}
     >
-      {p.isFilm ? (
-        // Film circle with photo
-        <div
-          className="w-full h-full rounded-full overflow-hidden"
-          style={{
-            boxShadow: '0 2px 0 2px rgba(255,255,255,0.5), 0 6px 24px rgba(0,0,0,0.10)',
-          }}
-        >
-          <img
-            src={`https://picsum.photos/seed/${p.seed}/220/220`}
-            alt=""
-            width={p.size}
-            height={p.size}
-            className="w-full h-full object-cover"
-            loading="lazy"
-            draggable={false}
-          />
-          <div
-            className="absolute inset-0 rounded-full"
-            style={{ boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.35)' }}
-          />
-        </div>
-      ) : (
-        // Plain pastel bubble
-        <div
-          className="w-full h-full rounded-full"
-          style={{ background: p.color }}
-        />
-      )}
+      {num}
     </motion.div>
   )
 }
 
-// ─── Scene text panel ───────────────────────────────────────────────────────────────────────
-function ScenePanel({
-  scene, opacity, y,
-}: {
-  scene: typeof SCENES[0]
-  opacity: MotionValue<number>
-  y: MotionValue<number>
+// ─── Individual scene content ──────────────────────────────────────────────────
+function SceneContent({ scene, progress, index }: {
+  scene: typeof SCENES[number]
+  progress: MotionValue<number>
+  index: number
 }) {
+  // Main text block
+  const opacity = useTransform(progress, [0, 0.18, 0.76, 1], [0, 1, 1, 0])
+  const clipProg = useTransform(progress, [0, 0.22], [100, 0])
+  const yText = useTransform(progress, [0, 0.2, 0.78, 1], ['5%', '0%', '0%', '-4%'])
+
+  // Kicker + act row
+  const kickerOp = useTransform(progress, [0, 0.28, 0.7, 1], [0, 1, 1, 0])
+
+  // The vertical light beam
+  const beamH = useTransform(progress, [0, 0.18, 0.78, 1], ['0%', '100%', '100%', '0%'])
+  const beamOp = useTransform(progress, [0, 0.12, 0.8, 1], [0, 1, 1, 0])
+
   return (
     <motion.div
-      className="absolute inset-0 flex flex-col items-center justify-center px-6 sm:px-20 text-center"
-      style={{ opacity, y }}
+      className="absolute inset-0 flex items-center"
+      style={{ opacity }}
     >
-      {scene.label && (
-        <div className="mb-5">
-          <span
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] sm:text-[11px] tracking-[0.18em] uppercase font-medium border"
-            style={{
-              color:       scene.accentColor,
-              borderColor: scene.accentColor + '44',
-              background:  scene.accentColor + '14',
-            }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: scene.accentColor }} />
-            {scene.label}
-          </span>
-        </div>
-      )}
-
-      {scene.icon && (
-        <div className="text-[48px] sm:text-[58px] mb-3 leading-none select-none">{scene.icon}</div>
-      )}
-
-      <h2
-        className="font-serif tracking-tight leading-[0.95] mb-5"
-        style={{
-          fontSize:  scene.bigHeading ? 'clamp(44px,7.5vw,108px)' : 'clamp(30px,4.5vw,68px)',
-          fontStyle: scene.bigHeading ? 'italic' : 'normal',
-          color:     scene.bigHeading ? scene.accentColor : scene.textColor,
-        }}
-      >
-        {scene.heading}
-      </h2>
-
-      <div className="flex items-center gap-3 mb-5" style={{ opacity: 0.4 }}>
-        <div className="h-px w-10 sm:w-14" style={{ background: scene.accentColor }} />
-        <span className="text-xs" style={{ color: scene.accentColor }}>✶</span>
-        <div className="h-px w-10 sm:w-14" style={{ background: scene.accentColor }} />
+      {/* Left: vertical accent beam */}
+      <div className="relative flex-shrink-0 flex justify-center" style={{ width: 2, height: '55vh', marginLeft: 'clamp(40px, 8vw, 120px)' }}>
+        <motion.div
+          className="absolute top-0 left-0 w-full origin-top rounded-full"
+          style={{
+            height: beamH,
+            opacity: beamOp,
+            background: `linear-gradient(to bottom, ${scene.light}00, ${scene.light}, ${scene.light}44)`,
+          }}
+        />
       </div>
 
-      <p
-        className="font-light leading-relaxed max-w-lg"
-        style={{ fontSize: 'clamp(15px,2vw,21px)', color: scene.bodyColor }}
+      {/* Right: text content */}
+      <motion.div
+        className="flex flex-col ml-8 sm:ml-12"
+        style={{ y: yText }}
       >
-        {scene.body}
-        {scene.bodyEm && (
-          <> <em className="not-italic font-normal" style={{ color: scene.textColor }}>{scene.bodyEm}</em></>
-        )}
-      </p>
-
-      {scene.sub && (
-        <p
-          className="mt-3 max-w-sm leading-relaxed"
-          style={{ fontSize: 'clamp(11px,1.3vw,13px)', color: scene.bodyColor, opacity: 0.7 }}
+        {/* Act tag + kicker */}
+        <motion.div
+          className="flex items-center gap-4 mb-6 sm:mb-8"
+          style={{ opacity: kickerOp }}
         >
-          {scene.sub}
-        </p>
-      )}
+          <span
+            className="text-[10px] sm:text-[11px] tracking-[0.28em] uppercase font-medium"
+            style={{ color: scene.light }}
+          >
+            {scene.act}
+          </span>
+          <div className="h-px w-8" style={{ background: `${scene.light}60` }} />
+          <span
+            className="text-[10px] sm:text-[11px] tracking-[0.14em] uppercase"
+            style={{ color: `${scene.light}88` }}
+          >
+            {scene.kicker}
+          </span>
+        </motion.div>
+
+        {/* Big heading — clip-path wipe reveal */}
+        <div className="overflow-hidden mb-1">
+          <motion.h2
+            className="font-serif leading-[0.9] tracking-tight"
+            style={{
+              fontSize: 'clamp(52px, 9vw, 140px)',
+              color: scene.textA,
+              clipPath: useTransform(clipProg, v => `inset(0 0 ${v}% 0)`),
+            }}
+          >
+            {scene.lineA}
+          </motion.h2>
+        </div>
+        <div className="overflow-hidden mb-8 sm:mb-10">
+          <motion.h2
+            className="font-serif leading-[0.9] tracking-tight"
+            style={{
+              fontSize: 'clamp(52px, 9vw, 140px)',
+              fontStyle: scene.italic ? 'italic' : 'normal',
+              color: scene.textB,
+              clipPath: useTransform(
+                useTransform(progress, [0.04, 0.26], [100, 0]),
+                v => `inset(0 0 ${v}% 0)`
+              ),
+            }}
+          >
+            {scene.lineB}
+          </motion.h2>
+        </div>
+
+        {/* Body text */}
+        <motion.p
+          className="leading-relaxed max-w-[42ch]"
+          style={{
+            fontSize: 'clamp(14px, 1.5vw, 18px)',
+            color: `${scene.textA}99`,
+            opacity: useTransform(progress, [0.25, 0.42, 0.72, 1], [0, 1, 1, 0]),
+          }}
+        >
+          {scene.body}
+        </motion.p>
+
+        {/* Scene index dots */}
+        <motion.div
+          className="flex items-center gap-2 mt-8 sm:mt-10"
+          style={{ opacity: useTransform(progress, [0.3, 0.45], [0, 1]) }}
+        >
+          {SCENES.map((_, j) => (
+            <div
+              key={j}
+              className="rounded-full transition-all duration-500"
+              style={{
+                width: j === index ? 20 : 4,
+                height: 4,
+                background: j === index ? scene.light : `${scene.light}33`,
+              }}
+            />
+          ))}
+        </motion.div>
+      </motion.div>
     </motion.div>
   )
 }
 
-// ─── Rising bubble pool manager ─────────────────────────────────────────────────────────────────────────────────
-function RisingPool() {
-  const [particles, setParticles] = useState<Particle[]>(() => {
-    // Seed initial batch spread across the screen at various heights
-    const initial: Particle[] = []
-    for (let i = 0; i < 18; i++) {
-      const p = mkParticle(i % 7 === 0)  // every 7th is a film circle
-      // stagger initial positions — some already mid-rise
-      initial.push({ ...p, delay: i * 0.4 })
-    }
-    return initial
-  })
-
-  // Spawn new particles on interval
-  useEffect(() => {
-    // Bubbles: every 900ms
-    const bubbleTimer = setInterval(() => {
-      setParticles(prev => [...prev, mkParticle(false)])
-    }, 900)
-
-    // Film circles: every 3.5s
-    const filmTimer = setInterval(() => {
-      setParticles(prev => [...prev, mkParticle(true)])
-    }, 3500)
-
-    return () => {
-      clearInterval(bubbleTimer)
-      clearInterval(filmTimer)
-    }
-  }, [])
-
-  const remove = (id: number) =>
-    setParticles(prev => prev.filter(p => p.id !== id))
+// ─── Film leader strip along top ───────────────────────────────────────────────
+function LeaderStrip({ progress }: { progress: ReturnType<typeof useScroll>['scrollYProgress'] }) {
+  const x = useTransform(progress, [0, 1], ['0%', '-62%'])
 
   return (
-    <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
-      <AnimatePresence>
-        {particles.map(p => (
-          <RisingParticle key={p.id} p={p} onDone={remove} />
+    <div className="absolute top-0 left-0 right-0 z-20 overflow-hidden" style={{ height: 32 }}>
+      <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.7)', borderBottom: '1px solid rgba(255,255,255,0.04)' }} />
+      <motion.div
+        className="flex items-center gap-10 px-6 absolute whitespace-nowrap"
+        style={{ x, top: 0, height: '100%' }}
+      >
+        {Array.from({ length: 4 }).flatMap(() =>
+          SCENES.map((s, i) => (
+            <span
+              key={`${s.act}-${i}-${Math.random()}`}
+              className="text-[9px] tracking-[0.3em] uppercase opacity-30"
+              style={{ color: '#fff', fontFamily: 'monospace' }}
+            >
+              {s.act} · {s.kicker}
+            </span>
+          ))
+        )}
+      </motion.div>
+      {/* Sprocket holes */}
+      <div className="absolute right-0 top-0 h-full flex items-center gap-[5px] pr-4 opacity-20">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="rounded-sm" style={{ width: 10, height: 7, background: 'rgba(255,255,255,0.5)' }} />
         ))}
-      </AnimatePresence>
+      </div>
     </div>
   )
 }
 
-// ─── Main export ────────────────────────────────────────────────────────────────────────────────────
+// ─── Right-side scene navigator ────────────────────────────────────────────────
+function SceneNav({ progress }: { progress: ReturnType<typeof useScroll>['scrollYProgress'] }) {
+  return (
+    <div className="absolute right-6 sm:right-10 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-4 items-end">
+      {SCENES.map((s, i) => {
+        const start = i / N
+        const end = (i + 1) / N
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const op = useTransform(progress, [start, start + 0.08, end - 0.08, end], [0.2, 1, 1, 0.2])
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const w = useTransform(progress, [start, start + 0.08, end - 0.08, end], [12, 28, 28, 12])
+
+        return (
+          <div key={i} className="flex items-center gap-2">
+            <motion.span
+              className="text-[9px] tracking-[0.2em] uppercase hidden sm:block"
+              style={{ opacity: op, color: s.light }}
+            >
+              {s.act}
+            </motion.span>
+            <motion.div
+              className="rounded-full"
+              style={{
+                height: 2,
+                width: w,
+                opacity: op,
+                background: s.light,
+              }}
+            />
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Scroll hint ───────────────────────────────────────────────────────────────
+function ScrollHint({ progress }: { progress: ReturnType<typeof useScroll>['scrollYProgress'] }) {
+  const opacity = useTransform(progress, [0, 0.1], [1, 0])
+
+  return (
+    <motion.div
+      className="absolute bottom-8 left-[clamp(40px,8vw,120px)] z-20 flex items-center gap-3"
+      style={{ opacity }}
+    >
+      <motion.div
+        className="w-px"
+        style={{ height: 32, background: 'rgba(255,255,255,0.25)' }}
+        animate={{ scaleY: [0.3, 1, 0.3], opacity: [0.2, 0.6, 0.2] }}
+        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      <span className="text-[10px] tracking-[0.24em] uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>
+        Scroll
+      </span>
+    </motion.div>
+  )
+}
+
+// ─── Main export ───────────────────────────────────────────────────────────────
 export default function CinematicSection() {
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -294,79 +336,67 @@ export default function CinematicSection() {
     offset: ['start start', 'end end'],
   })
 
-  const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 80,
-    damping:   20,
-    restDelta: 0.0001,
-  })
-
-  const N    = SCENES.length
-  const step = 1 / N
-  const FIN  = 0.05
-  const FOUT = 0.05
-
-  const sceneOpacities = SCENES.map((_, i) =>
-    useTransform(smoothProgress,
-      [i*step, i*step+FIN, (i+1)*step-FOUT, (i+1)*step],
-      [0, 1, 1, 0]
-    )
-  )
-  const sceneYs = SCENES.map((_, i) =>
-    useTransform(smoothProgress,
-      [i*step, i*step+FIN, (i+1)*step-FOUT, (i+1)*step],
-      [14, 0, 0, -14]
-    )
-  )
-  const bgOps = SCENE_BG.map((_, i) =>
-    useTransform(smoothProgress,
-      [i*step, i*step+FIN, (i+1)*step-FOUT, (i+1)*step],
-      [0, 1, 1, 0]
-    )
-  )
+  // Per-scene progresses — called unconditionally at component level, not inside .map()
+  const p0 = useSceneProgress(scrollYProgress, 0)
+  const p1 = useSceneProgress(scrollYProgress, 1)
+  const p2 = useSceneProgress(scrollYProgress, 2)
+  const p3 = useSceneProgress(scrollYProgress, 3)
+  const p4 = useSceneProgress(scrollYProgress, 4)
+  const progs = [p0, p1, p2, p3, p4]
 
   return (
-    <div ref={containerRef} style={{ height: '650vh' }}>
+    <div ref={containerRef} style={{ height: `${N * 140}vh` }}>
+      {/* Sticky theater frame */}
       <div
         className="sticky top-0 w-full overflow-hidden"
-        style={{ height: '100svh' }}
+        style={{ height: '100svh', background: '#0D0B08' }}
       >
-        {/* Per-scene background */}
-        {SCENE_BG.map((s, i) => (
-          <motion.div
-            key={i}
-            className="absolute inset-0 z-0"
-            style={{
-              opacity: bgOps[i],
-              background: `radial-gradient(ellipse 100% 100% at 50% 50%, ${s.glow} 0%, ${s.bg} 55%, ${s.bg} 100%)`,
-            }}
-          />
-        ))}
-
-        {/* Paper texture */}
+        {/* Subtle base vignette — always on */}
         <div
-          className="absolute inset-0 pointer-events-none z-[1]"
+          className="absolute inset-0 z-0 pointer-events-none"
           style={{
-            opacity: 0.022,
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-            backgroundSize: '200px',
+            background: 'radial-gradient(ellipse 90% 90% at 50% 50%, #1C1810 0%, #0D0B08 100%)',
           }}
         />
 
-        {/* Rising bubbles + film circles pool */}
-        <RisingPool />
-
-        {/* Scene text — on top of everything */}
-        <div className="absolute inset-0 z-[3]">
-          {SCENES.map((scene, i) => (
-            <ScenePanel
-              key={i}
-              scene={scene}
-              opacity={sceneOpacities[i]}
-              y={sceneYs[i]}
-            />
+        {/* Per-scene spotlight backgrounds */}
+        <div className="absolute inset-0 z-[1]">
+          {SCENES.map((s, i) => (
+            <SpotlightBg key={i} color={s.light} progress={progs[i]} />
           ))}
         </div>
 
+        {/* Ambient act numbers in background */}
+        <div className="absolute inset-0 z-[2] overflow-hidden pointer-events-none">
+          {SCENES.map((s, i) => (
+            <AmbientNumber key={i} num={(i + 1).toString().padStart(2, '0')} progress={progs[i]} />
+          ))}
+        </div>
+
+        {/* Film leader strip top */}
+        <LeaderStrip progress={scrollYProgress} />
+
+        {/* Scene content panels */}
+        <div className="absolute inset-0 z-[3]" style={{ paddingTop: 32 }}>
+          {SCENES.map((s, i) => (
+            <SceneContent key={i} scene={s} progress={progs[i]} index={i} />
+          ))}
+        </div>
+
+        {/* Right navigator */}
+        <SceneNav progress={scrollYProgress} />
+
+        {/* Scroll hint */}
+        <ScrollHint progress={scrollYProgress} />
+
+        {/* Bottom grain edge */}
+        <div
+          className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none"
+          style={{
+            height: 60,
+            background: 'linear-gradient(to top, #0D0B08, transparent)',
+          }}
+        />
       </div>
     </div>
   )

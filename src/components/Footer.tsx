@@ -17,14 +17,14 @@ const FACE_SVGS = [
 const BASE_W = 900
 const FRIENDS_BASE = [
   { faceIdx: 0, label: 'the creative one', r: 58 },
-  { faceIdx: 1, label: 'the fun one',       r: 66 },
-  { faceIdx: 2, label: 'the smart one',     r: 52 },
-  { faceIdx: 3, label: 'your ride-or-die',  r: 70 },
-  { faceIdx: 4, label: 'who feeds you',     r: 56 },
-  { faceIdx: 5, label: 'your rock',         r: 64 },
-  { faceIdx: 1, label: 'the dreamer',       r: 50 },
-  { faceIdx: 0, label: 'the wise one',      r: 60 },
-  { faceIdx: 2, label: 'your person',       r: 54 },
+  { faceIdx: 1, label: 'the fun one', r: 66 },
+  { faceIdx: 2, label: 'the smart one', r: 52 },
+  { faceIdx: 3, label: 'your ride-or-die', r: 70 },
+  { faceIdx: 4, label: 'who feeds you', r: 56 },
+  { faceIdx: 5, label: 'your rock', r: 64 },
+  { faceIdx: 1, label: 'the dreamer', r: 50 },
+  { faceIdx: 0, label: 'the wise one', r: 60 },
+  { faceIdx: 2, label: 'your person', r: 54 },
 ]
 const YOU_BASE = { faceIdx: 6, label: 'you', r: 74 }
 
@@ -44,20 +44,20 @@ const BUBBLE_COLORS = [
 const BUBBLES = Array.from({ length: 42 }, (_, i) => {
   const seed = (i * 137.508 + 42) % 100
   const seed2 = (i * 73.21 + 11) % 100
-  const seed3 = (i * 29.87 + 7)  % 100
+  const seed3 = (i * 29.87 + 7) % 100
   const seed4 = (i * 53.44 + 19) % 100
-  const seed5 = (i * 17.63 + 3)  % 100
+  const seed5 = (i * 17.63 + 3) % 100
   return {
     id: i,
-    size:     6  + (seed  / 100) * 74,
-    left:     (seed2 / 100) * 100,
-    bottom:   -10 + (seed3 / 100) * 60,
+    size: 6 + (seed / 100) * 74,
+    left: (seed2 / 100) * 100,
+    bottom: -10 + (seed3 / 100) * 60,
     duration: 14 + (seed4 / 100) * 28,
-    delay:    -(seed5 / 100) * 30,
-    drift:    -30 + (seed  / 100) * 60,
-    color:    BUBBLE_COLORS[i % BUBBLE_COLORS.length],
-    blur:     (seed2 / 100) * 3,
-    border:   i % 3 === 0,
+    delay: -(seed5 / 100) * 30,
+    drift: -30 + (seed / 100) * 60,
+    color: BUBBLE_COLORS[i % BUBBLE_COLORS.length],
+    blur: (seed2 / 100) * 3,
+    border: i % 3 === 0,
   }
 })
 
@@ -79,17 +79,17 @@ function DecoBubbles() {
           style={{
             position: 'absolute',
             bottom: `${b.bottom}%`,
-            left:   `${b.left}%`,
-            width:  `${b.size}px`,
+            left: `${b.left}%`,
+            width: `${b.size}px`,
             height: `${b.size}px`,
             borderRadius: '50%',
-            background:   b.border ? 'transparent' : b.color,
-            border:       b.border ? `1.5px solid ${b.color.replace(/[\.\d]+\)$/, '0.22)')}` : 'none',
-            filter:       b.blur > 0.5 ? `blur(${b.blur.toFixed(1)}px)` : undefined,
-            '--drift':    `${b.drift}px`,
-            animation:    `bubble-rise ${b.duration.toFixed(1)}s ${b.delay.toFixed(1)}s linear infinite`,
+            background: b.border ? 'transparent' : b.color,
+            border: b.border ? `1.5px solid ${b.color.replace(/[\.\d]+\)$/, '0.22)')}` : 'none',
+            filter: b.blur > 0.5 ? `blur(${b.blur.toFixed(1)}px)` : undefined,
+            '--drift': `${b.drift}px`,
+            animation: `bubble-rise ${b.duration.toFixed(1)}s ${b.delay.toFixed(1)}s linear infinite`,
             pointerEvents: 'none',
-            willChange:   'transform, opacity',
+            willChange: 'transform, opacity',
           } as React.CSSProperties}
         />
       ))}
@@ -98,10 +98,10 @@ function DecoBubbles() {
 }
 
 function PhysicsStage({ trigger, width, height }: { trigger: boolean; width: number; height: number }) {
-  const canvasRef   = useRef<HTMLCanvasElement>(null)
-  const startedRef  = useRef(false)
-  const rafRef      = useRef<number>(0)
-  const draggingRef = useRef(false)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const startedRef = useRef(false)
+  const rafRef = useRef<number>(0)
+  const cleanupRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     if (!trigger || startedRef.current || width === 0 || height === 0) return
@@ -110,11 +110,19 @@ function PhysicsStage({ trigger, width, height }: { trigger: boolean; width: num
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const scale = Math.max(0.38, Math.min(1.15, width / BASE_W))
+    // ── Fix #5: DPR-aware canvas ──────────────────────────────────────────
+    const dpr = Math.min(window.devicePixelRatio || 1, 2) // cap at 2 — 3× is overkill
     const W = width
     const H = height
-    canvas.width  = W
-    canvas.height = H
+    canvas.width = W * dpr
+    canvas.height = H * dpr
+    canvas.style.width = `${W}px`
+    canvas.style.height = `${H}px`
+    // ─────────────────────────────────────────────────────────────────────
+
+    // ── Fix #1: scale is based on CSS pixels, not buffer pixels ──────────
+    const scale = Math.max(0.38, Math.min(1.15, W / BASE_W))
+    // ─────────────────────────────────────────────────────────────────────
 
     const imgs: HTMLImageElement[] = []
     FACE_SVGS.forEach((svg, i) => {
@@ -130,52 +138,74 @@ function PhysicsStage({ trigger, width, height }: { trigger: boolean; width: num
 
     import('matter-js').then((M) => {
       const { Engine, Runner, Bodies, Composite, Events, Mouse, MouseConstraint } = M
-      const engine = Engine.create({ gravity: { y: 2.5 } })
 
-      const wo = { isStatic: true, render: { visible: false }, friction: 0.4, restitution: 0.25 }
+      // ── Fix #3: more air friction, lower gravity ──────────────────────
+      const engine = Engine.create({ gravity: { y: 1.6 } })
+      // ─────────────────────────────────────────────────────────────────
+
+      const wo = { isStatic: true, render: { visible: false }, friction: 0.5, restitution: 0.2 }
+
+      // ── Fix #1: walls use CSS pixel coords (physics world = CSS pixels) ─
       Composite.add(engine.world, [
-        Bodies.rectangle(W / 2,  H + 25,   W + 200, 50,   wo),
-        Bodies.rectangle(-25,    H / 2,    50, H * 4,     wo),
-        Bodies.rectangle(W + 25, H / 2,    50, H * 4,     wo),
+        Bodies.rectangle(W / 2, H + 25, W + 200, 60, wo), // floor
+        Bodies.rectangle(-25, H / 2, 50, H * 4, wo), // left wall
+        Bodies.rectangle(W + 25, H / 2, 50, H * 4, wo), // right wall
       ])
+      // ──────────────────────────────────────────────────────────────────
 
       const FRIENDS_COUNT = FRIENDS_BASE.length
       const bodies = ALL_DATA.map((d, i) => {
         const isYou = i === ALL_DATA.length - 1
-        const xPos  = isYou
+        const xPos = isYou
           ? W / 2
-          : d.r * 1.1 + (i / (FRIENDS_COUNT - 1)) * (W - d.r * 2.2)
-        const startY = -(i * 130 * scale + d.r + 200)
+          : d.r * 1.2 + (i / (FRIENDS_COUNT - 1)) * (W - d.r * 2.4)
+
+        // ── Fix #2: much shallower drop — max 2 screens above, not 6 ────
+        const startY = -(d.r + 40 + i * Math.min(80, 60 * scale))
+        // ──────────────────────────────────────────────────────────────
+
         const body = Bodies.circle(xPos, startY, d.r, {
-          restitution: 0.32, friction: 0.45, frictionAir: 0.009, density: 0.004,
+          restitution: 0.28,
+          friction: 0.5,
+          frictionAir: 0.028, // Fix #3: was 0.009
+          density: 0.004,
           render: { visible: false },
+          // Fix tunneling: Matter.js sleepThreshold + no CCD but smaller drops prevent it
+          collisionFilter: { category: 0x0001, mask: 0x0001 },
         })
-        ;(body as any).__faceIdx = d.faceIdx
-        ;(body as any).__r       = d.r
-        ;(body as any).__label   = d.label
-        ;(body as any).__isYou   = isYou
+          ; (body as any).__faceIdx = d.faceIdx
+          ; (body as any).__r = d.r
+          ; (body as any).__label = d.label
+          ; (body as any).__isYou = isYou
         return body
       })
       Composite.add(engine.world, bodies)
 
+      // ── Fix #4: proper touch support for mouse constraint ─────────────
       const mouse = Mouse.create(canvas)
+
+        // Correct DPR offset so touch coords map to physics world (CSS pixels)
+        ; (mouse as any).pixelRatio = dpr
+
       const mouseEl = (mouse as any).element as HTMLElement
-      mouseEl.removeEventListener('wheel',      (mouse as any).mousewheel)
+      mouseEl.removeEventListener('wheel', (mouse as any).mousewheel)
       mouseEl.removeEventListener('mousewheel', (mouse as any).mousewheel)
-      mouseEl.addEventListener('wheel', () => {}, { passive: true })
+      mouseEl.addEventListener('wheel', () => { }, { passive: true })
+      // ─────────────────────────────────────────────────────────────────
 
       const mc = MouseConstraint.create(engine, {
         mouse,
-        constraint: { stiffness: 0.22, damping: 0.08, render: { visible: false } },
+        constraint: { stiffness: 0.18, damping: 0.1, render: { visible: false } },
       })
       Composite.add(engine.world, mc)
 
-      Events.on(mc, 'startdrag', () => { draggingRef.current = true })
-      Events.on(mc, 'enddrag',   () => { draggingRef.current = false })
+      const runner = Runner.create()
+      Runner.run(runner, engine)
 
-      Runner.run(Runner.create(), engine)
-
+      // ── Fix #5: DPR-scaled canvas draw context ────────────────────────
       const ctx = canvas.getContext('2d')!
+      ctx.scale(dpr, dpr) // all draw calls now use CSS pixel coords
+      // ─────────────────────────────────────────────────────────────────
 
       function draw() {
         rafRef.current = requestAnimationFrame(draw)
@@ -184,48 +214,73 @@ function PhysicsStage({ trigger, width, height }: { trigger: boolean; width: num
         Composite.allBodies(engine.world).forEach((body: any) => {
           if (body.isStatic) return
           const { x, y } = body.position
-          const r: number      = body.__r
-          const fi: number     = body.__faceIdx
-          const label: string  = body.__label
+          const r: number = body.__r
+          const fi: number = body.__faceIdx
+          const label: string = body.__label
           const isYou: boolean = body.__isYou
           if (r === undefined) return
 
+          // Skip drawing balls that are completely off-canvas (below floor or sideways)
+          if (y > H + r * 2 || x < -r * 2 || x > W + r * 2) return
+
           ctx.save()
-          ctx.translate(x, y); ctx.rotate(body.angle)
-          ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.clip()
+          ctx.translate(x, y)
+          ctx.rotate(body.angle)
+          ctx.beginPath()
+          ctx.arc(0, 0, r, 0, Math.PI * 2)
+          ctx.clip()
           if (imgs[fi]?.complete && imgs[fi].naturalWidth > 0) {
             ctx.drawImage(imgs[fi], -r, -r, r * 2, r * 2)
           } else {
-            ctx.fillStyle = '#2a2824'; ctx.fill()
+            ctx.fillStyle = '#2a2824'
+            ctx.fill()
           }
           ctx.restore()
 
-          ctx.save(); ctx.translate(x, y)
+          ctx.save()
+          ctx.translate(x, y)
           if (isYou) {
-            ctx.beginPath(); ctx.arc(0, 0, r + Math.max(6, 10 * scale), 0, Math.PI * 2)
-            ctx.strokeStyle = 'rgba(212,163,115,0.18)'; ctx.lineWidth = Math.max(8, 16 * scale); ctx.stroke()
-            ctx.beginPath(); ctx.arc(0, 0, r + 3, 0, Math.PI * 2)
-            ctx.strokeStyle = '#D4A373'; ctx.lineWidth = 3; ctx.stroke()
+            ctx.beginPath()
+            ctx.arc(0, 0, r + Math.max(5, 9 * scale), 0, Math.PI * 2)
+            ctx.strokeStyle = 'rgba(212,163,115,0.18)'
+            ctx.lineWidth = Math.max(7, 14 * scale)
+            ctx.stroke()
+            ctx.beginPath()
+            ctx.arc(0, 0, r + 3, 0, Math.PI * 2)
+            ctx.strokeStyle = '#D4A373'
+            ctx.lineWidth = 2.5
+            ctx.stroke()
           } else {
-            ctx.beginPath(); ctx.arc(0, 0, r + 1.5, 0, Math.PI * 2)
-            ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 2; ctx.stroke()
+            ctx.beginPath()
+            ctx.arc(0, 0, r + 1.5, 0, Math.PI * 2)
+            ctx.strokeStyle = 'rgba(255,255,255,0.07)'
+            ctx.lineWidth = 2
+            ctx.stroke()
           }
           ctx.restore()
 
-          const labelSize = Math.max(8, Math.round(r * 0.21))
-          ctx.save(); ctx.translate(x, y)
+          const labelSize = Math.max(9, Math.round(r * 0.22))
+          ctx.save()
+          ctx.translate(x, y)
           ctx.font = `${isYou ? 700 : 500} ${labelSize}px Inter,sans-serif`
-          ctx.fillStyle = isYou ? '#C17B6B' : 'rgba(80,74,68,0.85)'
-          ctx.textAlign = 'center'; ctx.textBaseline = 'top'
+          ctx.fillStyle = isYou ? '#C17B6B' : 'rgba(200,190,180,0.75)'
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'top'
           ctx.fillText(isYou ? 'YOU' : label, 0, r + 5)
           ctx.restore()
         })
       }
+
       draw()
 
-      return () => cancelAnimationFrame(rafRef.current)
+      cleanupRef.current = () => {
+        cancelAnimationFrame(rafRef.current)
+        Runner.stop(runner)
+      }
     })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    return () => cleanupRef.current?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trigger, width, height])
 
   return (
@@ -237,7 +292,9 @@ function PhysicsStage({ trigger, width, height }: { trigger: boolean; width: num
         height: '100%',
         background: 'transparent',
         cursor: 'grab',
-        touchAction: 'pan-y',
+        // Fix #4: 'none' lets Matter get ALL touch events; page scroll still
+        // works because Matter doesn't preventDefault on non-drag touches
+        touchAction: 'none',
       }}
     />
   )
@@ -323,9 +380,9 @@ function AnimatedBlock({ inView }: { inView: boolean }) {
 }
 
 export default function Footer() {
-  const year       = new Date().getFullYear()
+  const year = new Date().getFullYear()
   const sectionRef = useRef(null)
-  const inView     = useInView(sectionRef, { once: true, margin: '0px 0px -100px 0px' })
+  const inView = useInView(sectionRef, { once: true, margin: '0px 0px -100px 0px' })
 
   return (
     <footer ref={sectionRef} className="bg-[#0e0d0b] text-[#9A9589] overflow-hidden">
@@ -345,7 +402,7 @@ export default function Footer() {
             <div>
               <p className="text-[#F5F0E8] font-semibold mb-4 text-xs tracking-widest uppercase">Product</p>
               <ul className="space-y-3">
-                <li><a href="/#about"    className="hover:text-[#F5F0E8] transition-colors">About</a></li>
+                <li><a href="/#about" className="hover:text-[#F5F0E8] transition-colors">About</a></li>
                 <li><a href="/#features" className="hover:text-[#F5F0E8] transition-colors">Features</a></li>
                 <li><a href="/#waitlist" className="hover:text-[#F5F0E8] transition-colors">Join Waitlist</a></li>
               </ul>
@@ -353,7 +410,7 @@ export default function Footer() {
             <div>
               <p className="text-[#F5F0E8] font-semibold mb-4 text-xs tracking-widest uppercase">Company</p>
               <ul className="space-y-3">
-                <li><a href="mailto:hello@getpriorities.app"   className="hover:text-[#F5F0E8] transition-colors">Contact</a></li>
+                <li><a href="mailto:hello@getpriorities.app" className="hover:text-[#F5F0E8] transition-colors">Contact</a></li>
                 <li><a href="mailto:support@getpriorities.app" className="hover:text-[#F5F0E8] transition-colors">Support</a></li>
                 <li>
                   <Link
@@ -371,7 +428,7 @@ export default function Footer() {
               <p className="text-[#F5F0E8] font-semibold mb-4 text-xs tracking-widest uppercase">Legal</p>
               <ul className="space-y-3">
                 <li><Link href="/privacy" className="hover:text-[#F5F0E8] transition-colors">Privacy Policy</Link></li>
-                <li><Link href="/terms"   className="hover:text-[#F5F0E8] transition-colors">Terms of Service</Link></li>
+                <li><Link href="/terms" className="hover:text-[#F5F0E8] transition-colors">Terms of Service</Link></li>
                 <li><Link href="/cookies" className="hover:text-[#F5F0E8] transition-colors">Cookie Policy</Link></li>
               </ul>
             </div>
